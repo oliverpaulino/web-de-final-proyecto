@@ -1,17 +1,26 @@
 package org.example;
+import io.javalin.Javalin;
+import io.javalin.http.staticfiles.Location;
+import com.example.services.MongoService;
 
 //TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
     static void main() {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        IO.println(String.format("Hello and welcome!"));
+      
+        MongoService.getInstance();
+         int httpPort = 7770;
+        Javalin app = Javalin.create(config -> {
+            // Servir archivos estáticos del frontend desde el classpath
+            config.staticFiles.add("/static", Location.CLASSPATH);
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            IO.println("i = " + i);
-        }
+            // Habilitar CORS para clientes REST/gRPC externos
+            config.bundledPlugins.enableCors(cors -> {
+                cors.addRule(rule -> {
+                    rule.anyHost();
+                    rule.allowCredentials = true;
+                });
+            });
+        }).start(httpPort);
     }
 }
