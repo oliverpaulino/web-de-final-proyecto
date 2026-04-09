@@ -1,4 +1,4 @@
-package com.survey.services;
+package com.example.services;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
