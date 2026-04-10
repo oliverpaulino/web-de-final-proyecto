@@ -16,6 +16,10 @@ java {
     }
 }
 
+application {
+    mainClass = 'org.example.Main'
+}
+
 
 dependencies {
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
