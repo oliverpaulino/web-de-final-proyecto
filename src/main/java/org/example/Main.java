@@ -25,8 +25,6 @@ public class Main {
         app.get("/", ctx -> ctx.redirect("/login.html"));
         app.post("/api/auth/register", AuthController::register);
         app.post("/api/auth/login", AuthController::login);
-        app.post("/api/auth/register", AuthController::register);
-        app.post("/api/auth/login", AuthController::login);
 
 
         app.before("/api/surveys/*", AuthController::verificarJWT);

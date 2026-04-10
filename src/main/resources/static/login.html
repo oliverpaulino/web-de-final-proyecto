@@ -159,7 +159,17 @@
             </div>
         </div>
     </div>
+<script>
 
+    function mostrarTab(tab) {
+        document.getElementById('formLogin').classList.toggle('d-none', tab !== 'login');
+        document.getElementById('formRegistro').classList.toggle('d-none', tab !== 'registro');
+        document.querySelectorAll('#authTabs .nav-link').forEach((btn, i) => {
+            btn.classList.toggle('active',
+                (i === 0 && tab === 'login') || (i === 1 && tab === 'registro'));
+        });
+    }
+</script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
