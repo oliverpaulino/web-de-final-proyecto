@@ -2,6 +2,7 @@ package org.example;
 
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
+import org.example.controllers.AuthController;
 import org.example.services.MongoService;
 
 public class Main {
@@ -22,6 +23,13 @@ public class Main {
         }).start(httpPort);
 
         app.get("/", ctx -> ctx.redirect("/login.html"));
+        app.post("/api/auth/register", AuthController::register);
+        app.post("/api/auth/login", AuthController::login);
+        app.post("/api/auth/register", AuthController::register);
+        app.post("/api/auth/login", AuthController::login);
+
+
+        app.before("/api/surveys/*", AuthController::verificarJWT);
 
     }
 }
