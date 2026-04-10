@@ -1,4 +1,4 @@
-package com.example.services;
+package org.example.services;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
