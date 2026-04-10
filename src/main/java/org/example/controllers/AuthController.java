@@ -76,6 +76,23 @@ public class AuthController {
             ctx.status(500).json(Map.of("error", "Error interno del servidor"));
         }
     }
+    // verificar jwts
+    public static void verificarJWT(Context ctx) {
+        String header = ctx.header("Authorization");
+        if (header == null || !header.startsWith("Bearer ")) {
+            ctx.status(401).json(Map.of("error", "Token no proporcionado"));
+            ctx.skipRemainingHandlers();
+            return;
+        }
+        try {
+            String token = header.substring(7);
+            ctx.attribute("username", JwtService.getUsername(token));
+            ctx.attribute("rol", JwtService.getRol(token));
+        } catch (JwtException e) {
+            ctx.status(401).json(Map.of("error", "Token inválido o expirado"));
+            ctx.skipRemainingHandlers();
+        }
+    }
 
     // helpers para convertir las clases a json y viceversa
     public static Document usuarioToDocument(Usuario u) {
