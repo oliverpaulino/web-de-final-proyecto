@@ -14,9 +14,6 @@ public class Encuesta {
    private String imagenBase64;
    private Date fechaRegistro;
 
-   public Encuesta() {
-   }
-
    public Encuesta(String nombre, String sector, String nivelEscolar,
          String usuario, Double latitud, Double longitud,
          String imagenBase64) {
@@ -48,7 +45,7 @@ public class Encuesta {
    }
 
    public String getSector() {
-      return sector;
+      return this.sector;
 
    }
 
@@ -58,7 +55,7 @@ public class Encuesta {
    }
 
    public String getNivelEscolar() {
-      return nivelEscolar;
+      return this.nivelEscolar;
 
    }
 
@@ -68,7 +65,7 @@ public class Encuesta {
    }
 
    public String getUsuario() {
-      return usuario;
+      return this.usuario;
 
    }
 
@@ -78,7 +75,7 @@ public class Encuesta {
    }
 
    public Double getLatitud() {
-      return latitud;
+      return this.latitud;
 
    }
 
@@ -88,7 +85,7 @@ public class Encuesta {
    }
 
    public Double getLongitud() {
-      return longitud;
+      return this.longitud;
 
    }
 
@@ -98,7 +95,7 @@ public class Encuesta {
    }
 
    public String getImagenBase64() {
-      return imagenBase64;
+      return this.imagenBase64;
 
    }
 
@@ -108,7 +105,7 @@ public class Encuesta {
    }
 
    public Date getFechaRegistro() {
-      return fechaRegistro;
+      return this.fechaRegistro;
 
    }
 
