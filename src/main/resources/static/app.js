@@ -27,9 +27,11 @@ window.addEventListener('DOMContentLoaded', async () => {
    document.getElementById('navRol').textContent = 'Rol: ' + usuarioActual.rol;
 
    await initDB();
-   obtenerGeolocalizacion();
+   iniciarWorker();
    actualizarEstadoConexion();
    escucharCambiosConexion();
+   obtenerGeolocalizacion();
+   actualizarContadorPendientes();
 
 });
 
@@ -87,6 +89,33 @@ async function inicializarMapa() {
          attribution: '© OpenStreetMap contributors'
       }).addTo(mapaLeaflet);
    }
+
+
+   // Marcadores rojos = locales
+   const redIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+   });
+
+   const locales = await obtenerEncuestasLocales();
+   locales.forEach(enc => {
+      if (enc.latitud && enc.longitud && enc.sincronizado === false) {
+         L.marker([enc.latitud, enc.longitud], { icon: redIcon })
+            .addTo(mapaLeaflet)
+            .bindPopup(`
+                    <b>${enc.nombre}</b><br>
+                    ${enc.sector} · ${enc.nivelEscolar}<br>
+                    <small class="${enc.sincronizado ? 'text-success' : 'text-warning'}">
+                        ${enc.sincronizado ? 'Sincronizado' : 'Pendiente'}
+                    </small>`);
+      }
+   });
+
+
 
 }
 //camara
@@ -233,7 +262,7 @@ function limpiarFormulario() {
 }
 
 
-// == PENDIENTES ==
+// pendientes
 async function renderizarPendientes() {
    try {
       const todasLasEncuestas = await obtenerEncuestasLocales();
@@ -266,16 +295,117 @@ async function renderizarPendientes() {
    }
 }
 
-// == SERVIDOR Y MAPA ==
+async function actualizarContadorPendientes() {
+   const p = await obtenerPendientes();
+   const badge = document.getElementById('badgePendientes');
+   document.getElementById('numPendientes').textContent = p.length;
+   badge.classList.toggle('d-none', p.length === 0);
+}
+
+// mapa y servidor 
 async function sincronizarManual() {
-   mostrarAlerta('Sincronización en desarrollo', 'info');
+   if (!estaOnline) { mostrarAlerta('Sin conexión para sincronizar', 'warning'); return; }
+
+   const pendientes = await obtenerPendientes();
+   if (pendientes.length === 0) { mostrarAlerta('No hay encuestas pendientes', 'info'); return; }
+
+   if (workerSync) {
+      workerSync.postMessage({
+         tipo: 'SINCRONIZAR',
+         datos: { wsUrl: WS_URL, encuestas: pendientes }
+      });
+      mostrarAlerta(` Sincronizando ${pendientes.length} encuesta(s)...`, 'info');
+   } else {
+      // Fallback via REST si Worker no disponible
+      let ok = 0;
+      for (const enc of pendientes) {
+         try {
+            const res = await fetch('/api/surveys', {
+               method: 'POST',
+               headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + tokenJWT
+               },
+               body: JSON.stringify(enc)
+            });
+            if (res.ok) { await marcarSincronizada(enc.localId); ok++; }
+         } catch { }
+      }
+      mostrarAlerta(`✅ ${ok}/${pendientes.length} sincronizadas`, 'success');
+      actualizarContadorPendientes();
+   }
 }
 
 async function cargarDelServidor() {
-   mostrarAlerta('Carga del servidor en desarrollo', 'info');
+   const cont = document.getElementById('listaServidor');
+
+   if (!estaOnline) {
+      cont.innerHTML = '<div class="alert alert-warning">Sin conexión al servidor</div>';
+      return;
+   }
+
+   cont.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"></div></div>';
+
+   try {
+      const res = await fetch('/api/surveys', {
+         headers: { 'Authorization': 'Bearer ' + tokenJWT }
+      });
+
+      // Si el token expiró, redirigir a login
+      if (res.status === 401) { logout(); return; }
+
+      const encuestas = await res.json();
+
+      if (!Array.isArray(encuestas) || encuestas.length === 0) {
+         cont.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-cloud fs-1"></i>
+                    <p>No hay encuestas en el servidor todavía</p>
+                </div>`;
+         return;
+      }
+
+      cont.innerHTML = encuestas.map(enc => `
+            <div class="card mb-2 shadow-sm border-primary">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="fw-bold mb-1">${enc.nombre}</h6>
+                            <p class="text-muted small mb-0">
+                                <i class="bi bi-geo-alt"></i> ${enc.sector} &bull;
+                                <i class="bi bi-mortarboard"></i> ${enc.nivelEscolar}
+                            </p>
+                            <p class="text-muted small mb-0">
+                                <i class="bi bi-person"></i> ${enc.usuario} &bull;
+                                <i class="bi bi-calendar"></i> ${formatFecha(enc.fechaRegistro)}
+                            </p>
+                        </div>
+                        <span class="badge bg-primary">
+                            <i class="bi bi-cloud-check"></i> Servidor
+                        </span>
+                    </div>
+                    ${enc.imagenBase64
+            ? `<img src="${enc.imagenBase64}" class="img-thumbnail mt-2" style="max-height:80px;">`
+            : ''}
+                    <div class="d-flex gap-2 mt-2">
+                        <button onclick="abrirEditar('${enc.id}', 'servidor')"
+                                class="btn btn-warning btn-sm">
+                            <i class="bi bi-pencil"></i> Editar
+                        </button>
+                        <button onclick="eliminarServidor('${enc.id}')"
+                                class="btn btn-danger btn-sm">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
+            </div>`).join('');
+
+   } catch (e) {
+      cont.innerHTML = `<div class="alert alert-danger">Error: ${e.message}</div>`;
+   }
 }
 
-// == GESTION DE USUARIOS ==
+//gestion de usuarios 
 async function renderizarUsuarios() {
    if (usuarioActual.rol !== 'admin') return;
 
