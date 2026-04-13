@@ -20,7 +20,8 @@ window.addEventListener('DOMContentLoaded', async () => {
    document.getElementById('navUsuario').textContent = usuarioActual.nombre || usuarioActual.username;
    document.getElementById('navRol').textContent = 'Rol: ' + usuarioActual.rol;
 
-   await obtenerGeolocalizacion();
+   await initDB();
+   obtenerGeolocalizacion();
    actualizarEstadoConexion();
    escucharCambiosConexion();
 
@@ -165,4 +166,38 @@ function actualizarEstadoConexion() {
    badge.innerHTML = estaOnline
       ? '<i class="bi bi-wifi"></i> Online'
       : '<i class="bi bi-wifi-off"></i> Offline';
+}
+
+async function guardarEncuesta() {
+   const nombre = document.getElementById('fNombre').value.trim();
+   const sector = document.getElementById('fSector').value.trim();
+   const nivelEscolar = document.getElementById('fNivelEscolar').value;
+
+   if (!nombre) { mostrarAlerta('El nombre es requerido', 'danger'); return; }
+   if (!sector) { mostrarAlerta('El sector es requerido', 'danger'); return; }
+   if (!nivelEscolar) { mostrarAlerta('Selecciona el nivel escolar', 'danger'); return; }
+
+   const encuesta = {
+      nombre, sector, nivelEscolar,
+      usuario: usuarioActual.username,
+      latitud: latActual,
+      longitud: lonActual,
+      imagenBase64: fotoBase64 || null
+   };
+
+   try {
+      await guardarEncuestaLocal(encuesta);
+      mostrarAlerta(' Guardado localmente', 'success');
+      limpiarFormulario();
+   } catch (e) {
+      mostrarAlerta('Error al guardar: ' + e.message, 'danger');
+   }
+}
+
+
+function limpiarFormulario() {
+   document.getElementById('fNombre').value = '';
+   document.getElementById('fSector').value = '';
+   document.getElementById('fNivelEscolar').value = '';
+   limpiarFoto();
 }
