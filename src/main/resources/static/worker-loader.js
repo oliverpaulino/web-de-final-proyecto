@@ -1,10 +1,3 @@
-worker-loader.js
-
-/**
- * worker-loader.js
- * Inicializa el Web Worker apuntando a /worker.js (servido por Javalin).
- * Se carga antes que app.js para que la variable workerSync esté lista.
- */
 
 let workerSync = null;
 

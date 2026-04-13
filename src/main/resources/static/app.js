@@ -179,6 +179,13 @@ function mostrarAlerta(msg, tipo = 'info') {
    setTimeout(() => el.classList.add('d-none'), 5000);
 }
 
+//formato
+function formatFecha(f) {
+   if (!f) return 'N/D';
+   return new Date(f).toLocaleDateString('es-DO', {
+      day: '2-digit', month: 'short', year: 'numeric'
+   });
+}
 
 //geolocalizacion
 function obtenerGeolocalizacion() {
@@ -286,6 +293,8 @@ async function renderizarPendientes() {
                   <p class="mb-1"><strong>${e.nombre}</strong> - ${e.sector}</p>
                   <p class="text-muted small mb-0">${e.nivelEscolar}</p>
                </div>
+                ${e.latitud ? `<p class="text-muted small mb-0 ms-auto text-end">
+                            📍 ${e.latitud.toFixed(4)}, ${e.longitud.toFixed(4)}</p>` : ''}
             </div>
          </div>
       `).join('');

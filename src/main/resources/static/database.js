@@ -49,9 +49,11 @@ function guardarEncuestaLocal(encuesta) {
 function obtenerPendientes() {
    return new Promise((resolve, reject) => {
       const tx = db.transaction(ST_ENC, 'readonly');
-      const index = tx.objectStore(ST_ENC).index('sincronizado');
-      const req = index.getAll(false);
-      req.onsuccess = () => resolve(req.result);
+      const req = tx.objectStore(ST_ENC).getAll();
+      req.onsuccess = () => {
+         const pendientes = req.result.filter(e => !e.sincronizado);
+         resolve(pendientes);
+      };
       req.onerror = () => reject(req.error);
    });
 }
@@ -63,4 +65,33 @@ function obtenerEncuestasLocales() {
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
    });
+}
+
+function marcarSincronizada(localId) {
+   return actualizarEncuestaLocal(localId, { sincronizado: true });
+}
+
+function guardarSesionLocal(token, username, nombre, rol) {
+   localStorage.setItem('survey_token', token);
+   localStorage.setItem('survey_username', username);
+   localStorage.setItem('survey_nombre', nombre);
+   localStorage.setItem('survey_rol', rol);
+}
+
+function obtenerSesionLocal() {
+   return {
+      token: localStorage.getItem('survey_token'),
+      username: localStorage.getItem('survey_username'),
+      nombre: localStorage.getItem('survey_nombre'),
+      rol: localStorage.getItem('survey_rol')
+   };
+}
+
+function limpiarSesionLocal() {
+   ['survey_token', 'survey_username', 'survey_nombre', 'survey_rol']
+      .forEach(k => localStorage.removeItem(k));
+}
+
+function tieneSesionLocal() {
+   return !!localStorage.getItem('survey_token');
 }

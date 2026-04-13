@@ -1,13 +1,3 @@
-worker.js
-
-/**
- * worker.js — Web Worker para sincronización en background.
- *
- * Corre en un hilo separado al del navegador.
- * Se comunica con app.js via postMessage / onmessage.
- * Abre un WebSocket, envía las encuestas pendientes en batch
- * y notifica al hilo principal el resultado.
- */
 
 let socket = null;
 
@@ -46,9 +36,9 @@ function sincronizar(wsUrl, encuestas) {
                 if (res.tipo === 'sync_resultado') {
                     self.postMessage({
                         tipo: 'SYNC_COMPLETADO',
-                        guardadas:    res.guardadas,
+                        guardadas: res.guardadas,
                         idsGuardados: res.idsGuardados,
-                        mensaje:      res.mensaje
+                        mensaje: res.mensaje
                     });
                     socket.close();
                 } else if (res.tipo === 'error') {

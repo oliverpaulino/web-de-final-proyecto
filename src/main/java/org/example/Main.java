@@ -4,6 +4,7 @@ import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 // App imports
 import org.example.controllers.AuthController;
+import org.example.controllers.SurveyController;
 import org.example.services.MongoService;
 
 public class Main {
@@ -28,10 +29,11 @@ public class Main {
         app.post("/api/auth/login", AuthController::login);
 
         // Security middleware for protected routes
-        app.before("/api/surveys/*", AuthController::verificarJWT);
-        app.before("/api/surveys", AuthController::verificarJWT);
-        app.before("/api/usuarios/*", AuthController::verificarJWT);
-        app.before("/api/usuarios", AuthController::verificarJWT);
+        app.before("/api/surveys*", AuthController::verificarJWT);
+        app.before("/api/usuarios*", AuthController::verificarJWT);
+        // Survey routes
+        app.get("/api/surveys", SurveyController::listarTodas);
+        app.post("/api/surveys", SurveyController::crear);
 
         // Admin User management routes
         app.get("/api/usuarios", org.example.controllers.UsuarioController::listarUsuarios);
