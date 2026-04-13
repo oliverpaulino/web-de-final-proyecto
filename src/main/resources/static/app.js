@@ -5,6 +5,9 @@ const usuarioActual = {
    rol: localStorage.getItem('survey_rol')
 };
 
+const WS_URL = (location.protocol === 'https:' ? 'wss' : 'ws')
+   + '://' + location.host + '/ws/sync';
+
 let mapaLeaflet = null;
 let webcam = null;
 let fotoBase64 = null;
@@ -194,10 +197,57 @@ async function guardarEncuesta() {
    }
 }
 
-
 function limpiarFormulario() {
    document.getElementById('fNombre').value = '';
    document.getElementById('fSector').value = '';
    document.getElementById('fNivelEscolar').value = '';
    limpiarFoto();
+}
+
+
+async function renderizarPendientes() {
+   const todasLasEncuentas = await obtenerEncuestasLocales();
+   const encuentasPendientes = todasLasEncuentas.filter(e => !e.sincronizado);
+   const contenedor = document.getElementById('listaPendientes');
+
+   if (encuentasPendientes.length === 0) {
+      contenedor.innerHTML = `
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-inbox fs-1"></i><p>No hay registros locales</p>
+            </div>`;
+      return;
+   }
+
+   contenedor.innerHTML = encuentasPendientes.map(enc => `
+        <div class="card mb-2 shadow-sm ${enc.sincronizado ? 'border-success' : 'border-warning'}">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="fw-bold mb-1">${enc.nombre}</h6>
+                        <p class="text-muted small mb-0">
+                            <i class="bi bi-geo-alt"></i> ${enc.sector} &bull;
+                            <i class="bi bi-mortarboard"></i> ${enc.nivelEscolar}
+                        </p>
+                        ${enc.latitud ? `<p class="text-muted small mb-0">
+                            📍 ${enc.latitud.toFixed(4)}, ${enc.longitud.toFixed(4)}</p>` : ''}
+                    </div>
+                    <span class="badge ${enc.sincronizado ? 'bg-success' : 'bg-warning text-dark'}">
+                        ${enc.sincronizado ? '✓ Sync' : '⏳ Pendiente'}
+                    </span>
+                </div>
+                ${enc.imagenBase64
+         ? `<img src="${enc.imagenBase64}" class="img-thumbnail mt-2" style="max-height:80px;">`
+         : ''}
+                <div class="d-flex gap-2 mt-2">
+                    <button onclick="abrirEditar(${enc.localId}, 'local')"
+                            class="btn btn-warning btn-sm">
+                        <i class="bi bi-pencil"></i> Editar
+                    </button>
+                    <button onclick="eliminarLocal(${enc.localId})"
+                            class="btn btn-danger btn-sm">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>`).join('');
 }

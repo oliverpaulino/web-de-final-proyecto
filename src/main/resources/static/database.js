@@ -43,3 +43,24 @@ function guardarEncuestaLocal(encuesta) {
       req.onerror = () => reject(req.error);
    });
 }
+
+
+
+function obtenerPendientes() {
+   return new Promise((resolve, reject) => {
+      const tx = db.transaction(ST_ENC, 'readonly');
+      const index = tx.objectStore(ST_ENC).index('sincronizado');
+      const req = index.getAll(false);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+   });
+}
+
+function obtenerEncuestasLocales() {
+   return new Promise((resolve, reject) => {
+      const tx = db.transaction(ST_ENC, 'readonly');
+      const req = tx.objectStore(ST_ENC).getAll();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+   });
+}
