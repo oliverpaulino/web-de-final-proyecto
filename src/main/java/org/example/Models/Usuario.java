@@ -11,13 +11,15 @@ public class Usuario {
     private String rol; // admin, supervisor, encuestador
     private Date fechaCreacion;
 
-
     public Usuario(String username, String password, String nombre, String rol) {
         this.username = username;
         this.password = password;
         this.nombre = nombre;
         this.rol = rol;
         this.fechaCreacion = new Date();
+    }
+
+    public Usuario() {
     }
 
     public String getId() {

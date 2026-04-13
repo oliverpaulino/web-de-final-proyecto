@@ -159,17 +159,73 @@
             </div>
         </div>
     </div>
-<script>
+    <script>
 
-    function mostrarTab(tab) {
-        document.getElementById('formLogin').classList.toggle('d-none', tab !== 'login');
-        document.getElementById('formRegistro').classList.toggle('d-none', tab !== 'registro');
-        document.querySelectorAll('#authTabs .nav-link').forEach((btn, i) => {
-            btn.classList.toggle('active',
-                (i === 0 && tab === 'login') || (i === 1 && tab === 'registro'));
+        // Si ya tiene sesión guardada, ir directo al app
+        // (function () {
+        //     if (localStorage.getItem('survey_token')) {
+        //         window.location.href = '/app.html';
+        //     }
+        // })();
+        function alerta(msg, tipo) {
+            const el = document.getElementById('alertLogin');
+            el.className = `alert alert-${tipo}`;
+            el.textContent = msg;
+            el.classList.remove('d-none');
+        }
+
+        function mostrarTab(tab) {
+            document.getElementById('formLogin').classList.toggle('d-none', tab !== 'login');
+            document.getElementById('formRegistro').classList.toggle('d-none', tab !== 'registro');
+            document.querySelectorAll('#authTabs .nav-link').forEach((btn, i) => {
+                btn.classList.toggle('active',
+                    (i === 0 && tab === 'login') || (i === 1 && tab === 'registro'));
+            });
+        }
+
+        async function hacerLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            if (!username || !password) { alerta('Completa todos los campos', 'warning'); return; }
+
+            if (!navigator.onLine) {
+                // Login offline con sesión guardada
+                const u = localStorage.getItem('survey_username');
+                if (localStorage.getItem('survey_token') && u === username) {
+                    document.getElementById('offlineInfo').classList.remove('d-none');
+                    setTimeout(() => window.location.href = '/app.html', 800);
+                } else {
+                    alerta('Sin conexión y no hay sesión guardada para este usuario', 'danger');
+                }
+                return;
+            }
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (!res.ok) { alerta(data.error || 'Credenciales incorrectas', 'danger'); return; }
+
+                localStorage.setItem('survey_token', data.token);
+                localStorage.setItem('survey_username', data.username);
+                localStorage.setItem('survey_nombre', data.nombre);
+                localStorage.setItem('survey_rol', data.rol);
+
+                window.location.href = '/app.html';
+            } catch (e) {
+                alerta('Error de conexión: ' + e.message, 'danger');
+            }
+        }
+
+
+        // Enter en password hace login
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') hacerLogin();
         });
-    }
-</script>
+
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
