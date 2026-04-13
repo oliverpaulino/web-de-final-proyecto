@@ -2,6 +2,12 @@ let mapaLeaflet = null;
 let webcam = null;
 let fotoBase64 = null;
 
+
+
+window.addEventListener('DOMContentLoaded', async () => {
+   await obtenerGeolocalizacion();
+});
+
 function logout() {
    ['survey_token', 'survey_username', 'survey_nombre', 'survey_rol']
       .forEach(k => localStorage.removeItem(k));
@@ -92,4 +98,28 @@ function mostrarAlerta(msg, tipo = 'info') {
    el.textContent = msg;
    el.classList.remove('d-none');
    setTimeout(() => el.classList.add('d-none'), 5000);
+}
+
+
+
+function obtenerGeolocalizacion() {
+   if (!navigator.geolocation) {
+      document.getElementById('geoTexto').textContent = 'Geolocalización no disponible';
+      return;
+   }
+   navigator.geolocation.getCurrentPosition(
+      (pos) => {
+         latActual = pos.coords.latitude;
+         lonActual = pos.coords.longitude;
+         document.getElementById('geoTexto').innerHTML =
+            `<i class="bi bi-geo-alt-fill"></i> ` +
+            `Lat: ${latActual.toFixed(5)}, Long: ${lonActual.toFixed(5)} ` +
+            `<span class="text-success fw-bold">✓</span>`;
+      },
+      (err) => {
+         document.getElementById('geoTexto').textContent =
+            'No se pudo obtener ubicación: ' + err.message;
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+   );
 }
