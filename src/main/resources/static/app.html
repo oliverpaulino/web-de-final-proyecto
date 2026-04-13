@@ -12,6 +12,11 @@
    <link rel="stylesheet" href="/styles.css">
    </style>
 </head>
+<script>
+   if (!localStorage.getItem('survey_token')) {
+      window.location.replace('/login.html');
+   }
+</script>
 
 <body>
    <!-- Contenido -->
@@ -77,7 +82,33 @@
                </div>
 
                <!-- Cámara -->
-
+               <div class="mb-3">
+                  <label class="form-label fw-semibold">Foto del Encuestado</label>
+                  <div class="card bg-dark text-center" style="border-radius:12px; overflow:hidden;">
+                     <div id="camContainer">
+                        <video id="webcam" autoplay playsinline
+                           style="margin:5px; width: 50%;  max-height: 500px; object-fit:cover;"></video>
+                        <canvas id="canvas" class="d-none"></canvas>
+                     </div>
+                     <div class="d-flex gap-2 justify-content-center p-2">
+                        <button onclick="iniciarCamara()" class="btn btn-outline-light btn-sm">
+                           <i class="bi bi-camera-video"></i> Activar
+                        </button>
+                        <button onclick="tomarFoto()" class="btn btn-warning btn-sm">
+                           <i class="bi bi-camera"></i> Capturar
+                        </button>
+                        <button onclick="limpiarFoto()" class="btn btn-outline-danger btn-sm">
+                           <i class="bi bi-trash"></i> Limpiar
+                        </button>
+                     </div>
+                  </div>
+                  <div id="fotoPreview" class="mt-2 d-none">
+                     <img id="fotoImg" class="img-fluid rounded" style="max-height:150px;">
+                     <p class="text-success small mt-1">
+                        <i class="bi bi-check-circle"></i> Foto capturada
+                     </p>
+                  </div>
+               </div>
 
                <div class="d-grid">
                   <button onclick="guardarEncuesta()" class="btn btn-primary btn-lg fw-bold">
@@ -88,23 +119,56 @@
          </div>
       </div>
 
+      <!-- ── LOCALES ── -->
+      <div id="secPendientes" class="seccion p-3 d-none">
+         <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0">
+               <i class="bi bi-database"></i> Registros Locales
+            </h6>
+            <button onclick="sincronizarManual()" class="btn btn-success btn-sm">
+               <i class="bi bi-cloud-upload"></i> Sincronizar Todo
+            </button>
+         </div>
+         <div id="listaPendientes">
+            <div class="text-center text-muted py-4">
+               <i class="bi bi-inbox fs-1"></i>
+               <p>No hay registros locales</p>
+            </div>
+         </div>
+      </div>
 
+      <!-- ── SERVIDOR ── -->
+      <div id="secServidor" class="seccion p-3 d-none">
+         <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0">
+               <i class="bi bi-cloud-check"></i> Encuestas en Servidor
+            </h6>
+            <button onclick="cargarDelServidor()" class="btn btn-outline-primary btn-sm">
+               <i class="bi bi-arrow-clockwise"></i> Actualizar
+            </button>
+         </div>
+         <div id="listaServidor">
+            <div class="text-center text-muted py-4">
+               <i class="bi bi-cloud fs-1"></i>
+               <p>Cargando...</p>
+            </div>
+         </div>
+      </div>
 
-
-
+      <!-- ── MAPA ── -->
+      <div id="secMapa" class="seccion p-3 d-none">
+         <h6 class="fw-bold mb-2">
+            <i class="bi bi-map"></i> Mapa de Registros
+         </h6>
+         <div id="mapa" style="height:450px; border-radius:12px; overflow:hidden;"></div>
+      </div>
 
    </div>
 
-
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-   <script>
-      function logout() {
-         ['survey_token', 'survey_username', 'survey_nombre', 'survey_rol']
-            .forEach(k => localStorage.removeItem(k));
-         window.location.replace('/login.html');
-      }
-   </script>
-
+   <script src="https://unpkg.com/webcam-easy/dist/webcam-easy.min.js"></script>
+   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+   <script src="/app.js"></script>
 </body>
 
 </html>
