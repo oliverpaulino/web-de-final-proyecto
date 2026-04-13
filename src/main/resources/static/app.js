@@ -101,6 +101,16 @@ async function inicializarMapa() {
       shadowSize: [41, 41]
    });
 
+   // Marcadores azules = servidor
+   const blueIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+   });
+
    const locales = await obtenerEncuestasLocales();
    locales.forEach(enc => {
       if (enc.latitud && enc.longitud && enc.sincronizado === false) {
@@ -115,7 +125,27 @@ async function inicializarMapa() {
       }
    });
 
-
+   if (estaOnline) {
+      try {
+         const res = await fetch('/api/surveys', {
+            headers: { 'Authorization': 'Bearer ' + tokenJWT }
+         });
+         if (res.status === 401) { logout(); return; }
+         const srv = await res.json();
+         if (Array.isArray(srv)) {
+            srv.forEach(enc => {
+               if (enc.latitud && enc.longitud) {
+                  L.marker([enc.latitud, enc.longitud], { icon: blueIcon })
+                     .addTo(mapaLeaflet)
+                     .bindPopup(`
+                                <b>${enc.nombre}</b><br>
+                                ${enc.sector} · ${enc.nivelEscolar}<br>
+                                <small class="text-primary">☁ Servidor</small>`);
+               }
+            });
+         }
+      } catch { }
+   }
 
 }
 //camara
@@ -256,6 +286,9 @@ async function guardarEncuesta() {
       await guardarEncuestaLocal(encuesta);
       mostrarAlerta(' Guardado localmente', 'success');
       limpiarFormulario();
+      actualizarContadorPendientes();
+      if (estaOnline) await sincronizarManual()
+      else mostrarAlerta('Sin conexión. Se sincronizará automáticamente cuando vuelvas online.', 'info');
    } catch (e) {
       mostrarAlerta('Error al guardar: ' + e.message, 'danger');
    }
