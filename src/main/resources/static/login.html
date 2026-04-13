@@ -162,11 +162,11 @@
     <script>
 
         // Si ya tiene sesión guardada, ir directo al app
-        // (function () {
-        //     if (localStorage.getItem('survey_token')) {
-        //         window.location.href = '/app.html';
-        //     }
-        // })();
+        (function () {
+            if (localStorage.getItem('survey_token')) {
+                window.location.href = '/app.html';
+            }
+        })();
         function alerta(msg, tipo) {
             const el = document.getElementById('alertLogin');
             el.className = `alert alert-${tipo}`;
@@ -219,6 +219,34 @@
             }
         }
 
+
+        async function hacerRegistro() {
+            const nombre = document.getElementById('regNombre').value.trim();
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const rol = document.getElementById('regRol').value;
+
+            if (!nombre || !username || !password) { alerta('Completa todos los campos', 'warning'); return; }
+
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre, username, password, rol })
+                });
+                const data = await res.json();
+                if (!res.ok) { alerta(data.error || 'Error al registrar', 'danger'); return; }
+
+                localStorage.setItem('survey_token', data.token);
+                localStorage.setItem('survey_username', data.username);
+                localStorage.setItem('survey_nombre', data.nombre);
+                localStorage.setItem('survey_rol', data.rol);
+
+                window.location.href = '/app.html';
+            } catch (e) {
+                alerta('Error: ' + e.message, 'danger');
+            }
+        }
 
         // Enter en password hace login
         document.addEventListener('keydown', (e) => {
