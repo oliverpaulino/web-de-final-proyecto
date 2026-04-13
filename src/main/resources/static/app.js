@@ -1,11 +1,29 @@
+const tokenJWT = localStorage.getItem('survey_token');
+const usuarioActual = {
+   username: localStorage.getItem('survey_username'),
+   nombre: localStorage.getItem('survey_nombre'),
+   rol: localStorage.getItem('survey_rol')
+};
+
 let mapaLeaflet = null;
 let webcam = null;
 let fotoBase64 = null;
+let latActual = null;
+let lonActual = null;
+
+let estaOnline = navigator.onLine;
 
 
 
 window.addEventListener('DOMContentLoaded', async () => {
+   // Mostrar datos del usuario en navbar
+   document.getElementById('navUsuario').textContent = usuarioActual.nombre || usuarioActual.username;
+   document.getElementById('navRol').textContent = 'Rol: ' + usuarioActual.rol;
+
    await obtenerGeolocalizacion();
+   actualizarEstadoConexion();
+   escucharCambiosConexion();
+
 });
 
 function logout() {
@@ -28,7 +46,7 @@ function mostrarSeccion(sec) {
    if (sec === 'servidor') cargarDelServidor();
    if (sec === 'mapa') inicializarMapa();
 }
-
+//mapa
 async function inicializarMapa() {
    if (!mapaLeaflet) {
       // Santiago de los Caballeros por defecto
@@ -39,7 +57,7 @@ async function inicializarMapa() {
    }
 
 }
-
+//camara
 function iniciarCamara() {
    const videoEl = document.getElementById('webcam');
    const canvasEl = document.getElementById('canvas');
@@ -90,7 +108,7 @@ function limpiarFoto() {
 }
 
 
-
+//alerta
 function mostrarAlerta(msg, tipo = 'info') {
    const el = document.getElementById('alertGlobal');
    if (!el) return;
@@ -101,7 +119,7 @@ function mostrarAlerta(msg, tipo = 'info') {
 }
 
 
-
+//geolocalizacion
 function obtenerGeolocalizacion() {
    if (!navigator.geolocation) {
       document.getElementById('geoTexto').textContent = 'Geolocalización no disponible';
@@ -122,4 +140,29 @@ function obtenerGeolocalizacion() {
       },
       { enableHighAccuracy: true, timeout: 10000 }
    );
+}
+
+
+// conexion
+function escucharCambiosConexion() {
+   window.addEventListener('online', () => {
+      estaOnline = true;
+      actualizarEstadoConexion();
+      mostrarAlerta('Conexión restaurada. Sincronizando...', 'info');
+      setTimeout(sincronizarManual, 1500);
+   });
+   window.addEventListener('offline', () => {
+      estaOnline = false;
+      actualizarEstadoConexion();
+      mostrarAlerta('Sin conexión. Los registros se guardan localmente.', 'warning');
+   });
+}
+
+function actualizarEstadoConexion() {
+   const badge = document.getElementById('estadoConexion');
+   if (!badge) return;
+   badge.className = estaOnline ? 'badge bg-success' : 'badge bg-danger';
+   badge.innerHTML = estaOnline
+      ? '<i class="bi bi-wifi"></i> Online'
+      : '<i class="bi bi-wifi-off"></i> Offline';
 }

@@ -19,6 +19,57 @@
 </script>
 
 <body>
+
+   <!-- Navbar -->
+   <nav class="navbar navbar-dark bg-primary fixed-top shadow">
+      <div class="container-fluid">
+         <span class="navbar-brand fw-bold">
+            <i class="bi bi-clipboard2-pulse"></i> Encuestas PUCMM
+         </span>
+         <div class="d-flex align-items-center gap-2">
+            <span id="estadoConexion" class="badge bg-success">
+               <i class="bi bi-wifi"></i> Online
+            </span>
+            <span id="badgePendientes" class="badge bg-warning text-dark d-none">
+               <i class="bi bi-clock"></i> <span id="numPendientes">0</span>
+            </span>
+            <div class="dropdown">
+               <button class="btn btn-outline-light btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                  <i class="bi bi-person-circle"></i> <span id="navUsuario"></span>
+               </button>
+               <ul class="dropdown-menu dropdown-menu-end">
+                  <li><span class="dropdown-item-text small text-muted" id="navRol"></span></li>
+                  <li>
+                     <hr class="dropdown-divider">
+                  </li>
+                  <li>
+                     <a class="dropdown-item" href="/rest-client/index.html" target="_blank">
+                        <i class="bi bi-broadcast"></i> Cliente REST
+                     </a>
+                  </li>
+                  <li>
+                     <a class="dropdown-item" href="/grpc-client/index.html" target="_blank">
+                        <i class="bi bi-lightning-charge"></i> Cliente gRPC
+                     </a>
+                  </li>
+                  <li>
+                     <hr class="dropdown-divider">
+                  </li>
+                  <li>
+                     <a class="dropdown-item" onclick="sincronizarManual()">
+                        <i class="bi bi-cloud-upload"></i> Sincronizar
+                     </a>
+                  </li>
+                  <li>
+                     <a class="dropdown-item text-danger" onclick="logout()">
+                        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                     </a>
+                  </li>
+               </ul>
+            </div>
+         </div>
+      </div>
+   </nav>
    <!-- Contenido -->
    <div class="container-fluid mt-5 pt-3 pb-5">
 
