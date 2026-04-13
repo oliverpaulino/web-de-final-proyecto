@@ -2,6 +2,7 @@ package org.example;
 
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
+// App imports
 import org.example.controllers.AuthController;
 import org.example.services.MongoService;
 
@@ -26,8 +27,16 @@ public class Main {
         app.post("/api/auth/register", AuthController::register);
         app.post("/api/auth/login", AuthController::login);
 
-
+        // Security middleware for protected routes
         app.before("/api/surveys/*", AuthController::verificarJWT);
+        app.before("/api/surveys", AuthController::verificarJWT);
+        app.before("/api/usuarios/*", AuthController::verificarJWT);
+        app.before("/api/usuarios", AuthController::verificarJWT);
+
+        // Admin User management routes
+        app.get("/api/usuarios", org.example.controllers.UsuarioController::listarUsuarios);
+        app.put("/api/usuarios/{username}/rol", org.example.controllers.UsuarioController::actualizarRol);
+        app.delete("/api/usuarios/{username}", org.example.controllers.UsuarioController::eliminarUsuario);
 
     }
 }

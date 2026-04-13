@@ -143,12 +143,10 @@
                         <label class="form-label fw-semibold">Contraseña</label>
                         <input type="password" id="regPassword" class="form-control" placeholder="Mín. 6 caracteres">
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-3 d-none">
                         <label class="form-label fw-semibold">Rol</label>
                         <select id="regRol" class="form-select">
-                            <option value="encuestador">Encuestador</option>
-                            <option value="supervisor">Supervisor</option>
-                            <option value="admin">Administrador</option>
+                            <option value="encuestador" selected>Encuestador</option>
                         </select>
                     </div>
                     <button onclick="hacerRegistro()" class="btn btn-success w-100 fw-bold">

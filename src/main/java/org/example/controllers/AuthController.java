@@ -35,7 +35,10 @@ public class AuthController {
                 return;
             }
 
-            Usuario nuevo = new Usuario(body.getUsername(), BCrypt.hashpw(body.getPassword(), BCrypt.gensalt()), body.getNombre() != null ? body.getNombre() : body.getUsername(), body.getRol() != null ? body.getRol() : "encuestador");
+            // Asegurar que el rol por defecto en registro abierto sea siempre encuestador
+            // para evitar escalada de privilegios
+            Usuario nuevo = new Usuario(body.getUsername(), BCrypt.hashpw(body.getPassword(), BCrypt.gensalt()),
+                    body.getNombre() != null ? body.getNombre() : body.getUsername(), "encuestador");
 
             Document doc = usuarioToDocument(nuevo);
             col.insertOne(doc);
@@ -43,14 +46,15 @@ public class AuthController {
 
             String token = JwtService.generarToken(nuevo.getUsername(), nuevo.getRol());
 
-            ctx.status(201).json(Map.of("mensaje", "Usuario registrado exitosamente", "token", token, "username", nuevo.getUsername(), "nombre", nuevo.getNombre(), "rol", nuevo.getRol()));
+            ctx.status(201).json(Map.of("mensaje", "Usuario registrado exitosamente", "token", token, "username",
+                    nuevo.getUsername(), "nombre", nuevo.getNombre(), "rol", nuevo.getRol()));
 
         } catch (Exception e) {
             ctx.status(500).json(Map.of("error", "Error interno del servidor"));
         }
     }
 
-    //metodo de login
+    // metodo de login
     public static void login(Context ctx) {
         try {
             Usuario body = ctx.bodyAsClass(Usuario.class);
@@ -60,7 +64,8 @@ public class AuthController {
                 return;
             }
 
-            Document doc = MongoService.getInstance().getUsuarios().find(new Document("username", body.getUsername())).first();
+            Document doc = MongoService.getInstance().getUsuarios().find(new Document("username", body.getUsername()))
+                    .first();
 
             if (doc == null || !BCrypt.checkpw(body.getPassword(), doc.getString("password"))) {
                 ctx.status(401).json(Map.of("error", "Credenciales incorrectas"));
@@ -70,12 +75,14 @@ public class AuthController {
             Usuario usuario = documentToUsuario(doc);
             String token = JwtService.generarToken(usuario.getUsername(), usuario.getRol());
 
-            ctx.json(Map.of("token", token, "username", usuario.getUsername(), "nombre", usuario.getNombre(), "rol", usuario.getRol(), "mensaje", "Login exitoso"));
+            ctx.json(Map.of("token", token, "username", usuario.getUsername(), "nombre", usuario.getNombre(), "rol",
+                    usuario.getRol(), "mensaje", "Login exitoso"));
 
         } catch (Exception e) {
             ctx.status(500).json(Map.of("error", "Error interno del servidor"));
         }
     }
+
     // verificar jwts
     public static void verificarJWT(Context ctx) {
         String header = ctx.header("Authorization");
@@ -96,15 +103,18 @@ public class AuthController {
 
     // helpers para convertir las clases a json y viceversa
     public static Document usuarioToDocument(Usuario u) {
-        return new Document().append("username", u.getUsername()).append("password", u.getPassword()).append("nombre", u.getNombre()).append("rol", u.getRol()).append("fechaCreacion", u.getFechaCreacion() != null ? u.getFechaCreacion() : new Date());
+        return new Document().append("username", u.getUsername()).append("password", u.getPassword())
+                .append("nombre", u.getNombre()).append("rol", u.getRol())
+                .append("fechaCreacion", u.getFechaCreacion() != null ? u.getFechaCreacion() : new Date());
     }
 
     public static Usuario documentToUsuario(Document doc) {
 
-        Usuario user = new Usuario( doc.getString("username"), doc.getString("password"), doc.getString("nombre"), doc.getString("rol"));
+        Usuario user = new Usuario(doc.getString("username"), doc.getString("password"), doc.getString("nombre"),
+                doc.getString("rol"));
         user.setId(doc.getObjectId("_id").toHexString());
         user.setFechaCreacion(doc.getDate("fechaCreacion"));
-        return  user;
+        return user;
 
     }
 }

@@ -19,6 +19,9 @@ let estaOnline = navigator.onLine;
 
 
 window.addEventListener('DOMContentLoaded', async () => {
+   // Configurar UI según el rol
+   configurarUIPorRol();
+
    // Mostrar datos del usuario en navbar
    document.getElementById('navUsuario').textContent = usuarioActual.nombre || usuarioActual.username;
    document.getElementById('navRol').textContent = 'Rol: ' + usuarioActual.rol;
@@ -40,15 +43,40 @@ function mostrarSeccion(sec) {
    document.querySelectorAll('.seccion').forEach(s => s.classList.add('d-none'));
    document.querySelectorAll('#mainTabs .nav-link').forEach(b => b.classList.remove('active'));
 
+   // validación de rol
+   if (sec === 'servidor' || sec === 'mapa') {
+      if (usuarioActual.rol === 'encuestador') {
+         mostrarAlerta('No tienes permisos', 'danger'); return;
+      }
+   }
+   if (sec === 'usuarios') {
+      if (usuarioActual.rol !== 'admin') {
+         mostrarAlerta('Solo administradores', 'danger'); return;
+      }
+   }
+
    const id = 'sec' + sec.charAt(0).toUpperCase() + sec.slice(1);
    document.getElementById(id)?.classList.remove('d-none');
 
-   const idx = ['nueva', 'pendientes', 'servidor', 'mapa'].indexOf(sec);
-   document.querySelectorAll('#mainTabs .nav-link')[idx]?.classList.add('active');
+   const tabL = document.getElementById('tab' + sec.charAt(0).toUpperCase() + sec.slice(1));
+   if (tabL) tabL.classList.add('active');
 
    if (sec === 'pendientes') renderizarPendientes();
    if (sec === 'servidor') cargarDelServidor();
    if (sec === 'mapa') inicializarMapa();
+   if (sec === 'usuarios') renderizarUsuarios();
+}
+
+function configurarUIPorRol() {
+   const rol = usuarioActual.rol;
+   // encuestador -> solo pendientes y nueva (pestañas liServidor y liMapa quedan en d-none por defecto)
+   if (rol === 'supervisor' || rol === 'admin') {
+      document.getElementById('liServidor').classList.remove('d-none');
+      document.getElementById('liMapa').classList.remove('d-none');
+   }
+   if (rol === 'admin') {
+      document.getElementById('liUsuarios').classList.remove('d-none');
+   }
 }
 //mapa
 async function inicializarMapa() {
@@ -205,49 +233,126 @@ function limpiarFormulario() {
 }
 
 
+// == PENDIENTES ==
 async function renderizarPendientes() {
-   const todasLasEncuentas = await obtenerEncuestasLocales();
-   const encuentasPendientes = todasLasEncuentas.filter(e => !e.sincronizado);
-   const contenedor = document.getElementById('listaPendientes');
+   try {
+      const todasLasEncuestas = await obtenerEncuestasLocales();
+      const encuestasPendientes = todasLasEncuestas.filter(e => !e.sincronizado);
+      const contenedor = document.getElementById('listaPendientes');
 
-   if (encuentasPendientes.length === 0) {
-      contenedor.innerHTML = `
+      if (encuestasPendientes.length === 0) {
+         contenedor.innerHTML = `
             <div class="text-center text-muted py-4">
-                <i class="bi bi-inbox fs-1"></i><p>No hay registros locales</p>
+                <i class="bi bi-inbox fs-1"></i>
+                <p>No hay registros locales</p>
             </div>`;
-      return;
-   }
+         return;
+      }
 
-   contenedor.innerHTML = encuentasPendientes.map(enc => `
-        <div class="card mb-2 shadow-sm ${enc.sincronizado ? 'border-success' : 'border-warning'}">
-            <div class="card-body p-3">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h6 class="fw-bold mb-1">${enc.nombre}</h6>
-                        <p class="text-muted small mb-0">
-                            <i class="bi bi-geo-alt"></i> ${enc.sector} &bull;
-                            <i class="bi bi-mortarboard"></i> ${enc.nivelEscolar}
-                        </p>
-                        ${enc.latitud ? `<p class="text-muted small mb-0">
-                            📍 ${enc.latitud.toFixed(4)}, ${enc.longitud.toFixed(4)}</p>` : ''}
-                    </div>
-                    <span class="badge ${enc.sincronizado ? 'bg-success' : 'bg-warning text-dark'}">
-                        ${enc.sincronizado ? '✓ Sync' : '⏳ Pendiente'}
-                    </span>
-                </div>
-                ${enc.imagenBase64
-         ? `<img src="${enc.imagenBase64}" class="img-thumbnail mt-2" style="max-height:80px;">`
-         : ''}
-                <div class="d-flex gap-2 mt-2">
-                    <button onclick="abrirEditar(${enc.localId}, 'local')"
-                            class="btn btn-warning btn-sm">
-                        <i class="bi bi-pencil"></i> Editar
-                    </button>
-                    <button onclick="eliminarLocal(${enc.localId})"
-                            class="btn btn-danger btn-sm">
-                        <i class="bi bi-trash"></i> Eliminar
-                    </button>
-                </div>
+      contenedor.innerHTML = encuestasPendientes.map(e => `
+         <div class="card mb-2">
+            <div class="card-body d-flex align-items-center">
+               ${e.imagenBase64 ? `<img src="${e.imagenBase64}" alt="Foto" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">` : `<div class="bg-secondary rounded me-3 d-flex justify-content-center align-items-center text-white" style="width: 60px; height: 60px;"><i class="bi bi-camera"></i></div>`}
+               <div>
+                  <p class="mb-1"><strong>${e.nombre}</strong> - ${e.sector}</p>
+                  <p class="text-muted small mb-0">${e.nivelEscolar}</p>
+               </div>
             </div>
-        </div>`).join('');
+         </div>
+      `).join('');
+
+   } catch (e) {
+      mostrarAlerta('Error cargando pendientes: ' + e.message, 'danger');
+   }
+}
+
+// == SERVIDOR Y MAPA ==
+async function sincronizarManual() {
+   mostrarAlerta('Sincronización en desarrollo', 'info');
+}
+
+async function cargarDelServidor() {
+   mostrarAlerta('Carga del servidor en desarrollo', 'info');
+}
+
+// == GESTION DE USUARIOS ==
+async function renderizarUsuarios() {
+   if (usuarioActual.rol !== 'admin') return;
+
+   try {
+      const req = await fetch('/api/usuarios', {
+         headers: { 'Authorization': 'Bearer ' + tokenJWT }
+      });
+      if (!req.ok) throw new Error('No autorizado');
+      const usuarios = await req.json();
+
+      const contenedor = document.getElementById('listaUsuarios');
+      if (usuarios.length === 0) {
+         contenedor.innerHTML = '<p>No hay usuarios</p>';
+         return;
+      }
+
+      contenedor.innerHTML = usuarios.map(u => `
+      <div class="card-body p-3">
+         <div class="d-flex justify-content-between align-items-start">
+            <div>
+               <h6 class="fw-bold mb-1">${u.nombre} <small>(${u.username})</small></h6>
+               <p class="text-muted small mb-0">Rol actual: <b>${u.rol}</b></p>
+            </div>
+         </div>
+         <div class="mt-3 d-flex gap-2">
+            <select id="selRol_${u.username}" class="form-select form-select-sm" style="width: auto;" ${u.username === usuarioActual.username || u.username === 'admin' ? 'disabled' : ''}>
+               <option value="encuestador" ${u.rol === 'encuestador' ? 'selected' : ''}>Encuestador</option>
+               <option value="supervisor" ${u.rol === 'supervisor' ? 'selected' : ''}>Supervisor</option>
+               <option value="admin" ${u.rol === 'admin' ? 'selected' : ''}>Administrador</option>
+            </select>
+            <button onclick="cambiarRolUsuario('${u.username}')" class="btn btn-outline-success btn-sm" ${u.username === usuarioActual.username || u.username === 'admin' ? 'disabled' : ''}>
+               <i class="bi bi-person-check"></i> Actualizar
+            </button>
+            ${u.username !== usuarioActual.username && u.rol !== 'admin' ?
+            `<button onclick="eliminarUsuario('${u.username}')" class="btn btn-outline-danger btn-sm">
+                           <i class="bi bi-trash"></i> Eliminar
+                     </button>` : ''}
+         </div>
+      </div>
+   `).join('');
+   } catch (e) {
+      mostrarAlerta('Error cargando usuarios: ' + e.message, 'danger');
+   }
+}
+
+async function cambiarRolUsuario(username) {
+   if (!confirm('¿Cambiar rol a ' + username + '?')) return;
+   const nuevoRol = document.getElementById('selRol_' + username).value;
+
+   try {
+      const req = await fetch('/api/usuarios/' + username + '/rol', {
+         method: 'PUT',
+         headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + tokenJWT
+         },
+         body: JSON.stringify({ rol: nuevoRol })
+      });
+      if (!req.ok) throw new Error('Error al actualizar');
+      mostrarAlerta('Rol actualizado correctamente', 'success');
+      renderizarUsuarios();
+   } catch (e) {
+      mostrarAlerta(e.message, 'danger');
+   }
+}
+
+async function eliminarUsuario(username) {
+   if (!confirm('¡ATENCIÓN! ¿Eliminar usuario ' + username + ' de forma definitiva?')) return;
+   try {
+      const req = await fetch('/api/usuarios/' + username, {
+         method: 'DELETE',
+         headers: { 'Authorization': 'Bearer ' + tokenJWT }
+      });
+      if (!req.ok) throw new Error('Error al eliminar');
+      mostrarAlerta('Usuario eliminado', 'success');
+      renderizarUsuarios();
+   } catch (e) {
+      mostrarAlerta(e.message, 'danger');
+   }
 }

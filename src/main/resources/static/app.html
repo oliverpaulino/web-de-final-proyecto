@@ -78,23 +78,28 @@
       <!-- Tabs de navegación -->
       <ul class="nav nav-tabs nav-fill mt-2 px-2" id="mainTabs">
          <li class="nav-item">
-            <button class="nav-link active" onclick="mostrarSeccion('nueva')">
+            <button class="nav-link active" onclick="mostrarSeccion('nueva')" id="tabNueva">
                <i class="bi bi-plus-circle"></i> Nueva
             </button>
          </li>
          <li class="nav-item">
-            <button class="nav-link" onclick="mostrarSeccion('pendientes')">
+            <button class="nav-link" onclick="mostrarSeccion('pendientes')" id="tabPendientes">
                <i class="bi bi-clock-history"></i> Locales
             </button>
          </li>
-         <li class="nav-item">
-            <button class="nav-link" onclick="mostrarSeccion('servidor')">
+         <li class="nav-item d-none" id="liServidor">
+            <button class="nav-link" onclick="mostrarSeccion('servidor')" id="tabServidor">
                <i class="bi bi-cloud"></i> Servidor
             </button>
          </li>
-         <li class="nav-item">
-            <button class="nav-link" onclick="mostrarSeccion('mapa')">
+         <li class="nav-item d-none" id="liMapa">
+            <button class="nav-link" onclick="mostrarSeccion('mapa')" id="tabMapa">
                <i class="bi bi-geo-alt"></i> Mapa
+            </button>
+         </li>
+         <li class="nav-item d-none" id="liUsuarios">
+            <button class="nav-link" onclick="mostrarSeccion('usuarios')" id="tabUsuarios">
+               <i class="bi bi-people"></i> Usuarios
             </button>
          </li>
       </ul>
@@ -212,6 +217,24 @@
             <i class="bi bi-map"></i> Mapa de Registros
          </h6>
          <div id="mapa" style="height:450px; border-radius:12px; overflow:hidden;"></div>
+      </div>
+
+      <!-- ── USUARIOS ── -->
+      <div id="secUsuarios" class="seccion p-3 d-none">
+         <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0">
+               <i class="bi bi-people"></i> Gestión de Usuarios
+            </h6>
+            <button onclick="renderizarUsuarios()" class="btn btn-outline-primary btn-sm">
+               <i class="bi bi-arrow-clockwise"></i> Actualizar
+            </button>
+         </div>
+         <div id="listaUsuarios">
+            <div class="text-center text-muted py-4">
+               <i class="bi bi-people fs-1"></i>
+               <p>Cargando usuarios...</p>
+            </div>
+         </div>
       </div>
 
    </div>
