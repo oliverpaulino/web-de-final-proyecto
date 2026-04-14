@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'application'
     id 'com.google.protobuf' version '0.9.4'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'  // agrega esto
 }
 
 group = 'org.example'
@@ -13,7 +14,8 @@ repositories {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
+        // Java 25 no existe aún como release oficial — usa 21 (LTS)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -21,6 +23,15 @@ application {
     mainClass = 'org.example.Main'
 }
 
+shadowJar {
+    archiveBaseName.set('survey-app')
+    archiveClassifier.set('')
+    archiveVersion.set('')
+    manifest {
+        attributes 'Main-Class': 'org.example.Main'
+    }
+    mergeServiceFiles()  // necesario para grpc
+}
 
 dependencies {
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
@@ -30,20 +41,11 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    // Javalin 6.7.0
+
     implementation "io.javalin:javalin:6.7.0"
-
-    // Logger
     implementation "org.slf4j:slf4j-simple:2.0.12"
-
-    // Jackson JSON
     implementation "com.fasterxml.jackson.core:jackson-databind:2.17.0"
-
-    // MongoDB Driver
     implementation "org.mongodb:mongodb-driver-sync:5.0.0"
-
-
-    // BCrypt
     implementation "org.mindrot:jbcrypt:0.4"
 
     implementation "io.grpc:grpc-netty-shaded:1.62.2"
@@ -56,6 +58,7 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
 protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:3.25.3"
