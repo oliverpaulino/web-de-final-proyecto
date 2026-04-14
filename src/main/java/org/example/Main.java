@@ -73,7 +73,7 @@ public class Main {
             com.survey.grpc.SurveyServiceGrpc.SurveyServiceBlockingStub stub = com.survey.grpc.SurveyServiceGrpc.newBlockingStub(ch);
             com.survey.grpc.SurveyListResponse res = stub.listarFormularios(com.survey.grpc.UserRequest.newBuilder().setUsuario(ctx.pathParam("usuario")).build());
             ch.shutdown();
-            java.util.List<Map<String, Object>> out = new java.util.ArrayList<>();
+        java.util.List<Map<String, Object>> out = new java.util.ArrayList<>();
             for (com.survey.grpc.SurveyResponse r : res.getEncuestasList()) {
                 out.add(Map.of("id", r.getId(), "nombre", r.getNombre(), "sector", r.getSector(), "nivelEscolar", r.getNivelEscolar(), "usuario", r.getUsuario(), "latitud", r.getLatitud(), "longitud", r.getLongitud(), "fechaRegistro", r.getFecha(), "imagenBase64", r.getImagenBase64()));
             }

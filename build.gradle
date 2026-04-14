@@ -2,8 +2,9 @@ plugins {
     id 'java'
     id 'application'
     id 'com.google.protobuf' version '0.9.4'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'  // agrega esto
+    id 'com.gradleup.shadow' version '8.3.0'
 }
+
 
 group = 'org.example'
 version = '1.0-SNAPSHOT'
@@ -14,8 +15,8 @@ repositories {
 
 java {
     toolchain {
-        // Java 25 no existe aún como release oficial — usa 21 (LTS)
-        languageVersion = JavaLanguageVersion.of(21)
+
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
