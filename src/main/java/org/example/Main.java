@@ -7,6 +7,9 @@ import org.example.controllers.AuthController;
 import org.example.controllers.SurveyController;
 import org.example.services.MongoService;
 import org.example.services.WebSocketService;
+
+import java.util.Map;
+
 import org.example.SurveyGrpcServer;
 
 public class Main {
@@ -59,6 +62,8 @@ public class Main {
         app.get("/api/usuarios", org.example.controllers.UsuarioController::listarUsuarios);
         app.put("/api/usuarios/{username}/rol", org.example.controllers.UsuarioController::actualizarRol);
         app.delete("/api/usuarios/{username}", org.example.controllers.UsuarioController::eliminarUsuario);
+
+        app.get("/health", ctx -> ctx.json(Map.of("status", "ok", "mensaje", "Servidor activo")));
 
     }
 }

@@ -13,6 +13,8 @@ import org.bson.types.ObjectId;
 import java.util.*;
 
 public class SurveyController {
+    private static final int MAX_IMAGEN_BASE64_CHARS = 2_500_000;
+
     public static void listarTodas(Context ctx) {
         try {
             List<Encuesta> lista = new ArrayList<>();
@@ -56,6 +58,18 @@ public class SurveyController {
                 return;
             }
 
+            String imagen = encuesta.getImagenBase64();
+            if (imagen != null) {
+                imagen = imagen.trim();
+                if (imagen.isEmpty()) {
+                    encuesta.setImagenBase64(null);
+                } else if (imagen.length() > MAX_IMAGEN_BASE64_CHARS) {
+                    ctx.status(413).json(Map.of(
+                            "error", "La imagen es demasiado grande. Reduce su tamaño o calidad."));
+                    return;
+                }
+            }
+
             // El usuario siempre viene del JWT, no del body
             encuesta.setUsuario(ctx.attribute("username"));
             encuesta.setFechaRegistro(new Date());
@@ -69,6 +83,7 @@ public class SurveyController {
                     "id", doc.getObjectId("_id").toHexString()));
 
         } catch (Exception e) {
+            e.printStackTrace();
             ctx.status(500).json(Map.of("error", "Error al guardar la encuesta"));
         }
     }
@@ -140,8 +155,8 @@ public class SurveyController {
                 .append("latitud", e.getLatitud())
                 .append("longitud", e.getLongitud())
                 .append("imagenBase64", e.getImagenBase64())
-                .append("fechaRegistro", e.getFechaRegistro() != null ? e.getFechaRegistro() : new Date());
-        // .append("sincronizado", e.isSincronizado());
+                .append("fechaRegistro", e.getFechaRegistro() != null ? e.getFechaRegistro() : new Date())
+                .append("sincronizado", e.isSincronizado());
     }
 
     public static Encuesta documentToEncuesta(Document doc) {

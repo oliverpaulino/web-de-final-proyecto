@@ -35,10 +35,30 @@ public class AuthController {
                 return;
             }
 
-            // Asegurar que el rol por defecto en registro abierto sea siempre encuestador
-            // para evitar escalada de privilegios
+            // Por defecto, registro abierto -> encuestador.
+            // Solo si el request trae JWT valido de admin se permite asignar el rol solicitado.
+            String rolFinal = "encuestador";
+            String rolSolicitado = body.getRol();
+            if (rolSolicitado != null && !rolSolicitado.isBlank()) {
+                String header = ctx.header("Authorization");
+                if (header != null && header.startsWith("Bearer ")) {
+                    try {
+                        String token = header.substring(7);
+                        String rolDelToken = JwtService.getRol(token);
+                        boolean rolValido = rolSolicitado.equals("admin")
+                                || rolSolicitado.equals("supervisor")
+                                || rolSolicitado.equals("encuestador");
+                        if ("admin".equals(rolDelToken) && rolValido) {
+                            rolFinal = rolSolicitado;
+                        }
+                    } catch (Exception ignored) {
+                        // Si el token no es valido o no es admin, se mantiene encuestador.
+                    }
+                }
+            }
+
             Usuario nuevo = new Usuario(body.getUsername(), BCrypt.hashpw(body.getPassword(), BCrypt.gensalt()),
-                    body.getNombre() != null ? body.getNombre() : body.getUsername(), "encuestador");
+                    body.getNombre() != null ? body.getNombre() : body.getUsername(), rolFinal);
 
             Document doc = usuarioToDocument(nuevo);
             col.insertOne(doc);

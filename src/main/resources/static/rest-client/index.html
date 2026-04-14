@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cliente REST - Encuestas PUCMM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .sidebar {
+            background: #fff;
+            min-height: calc(100vh - 56px);
+            border-right: 1px solid #dee2e6;
+        }
+
+        .sidebar .nav-link {
+            color: #495057;
+            border-radius: 8px;
+            margin: 2px 0;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: #e9f2ff;
+            color: #0d6efd;
+        }
+
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 0.8rem;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .badge-method {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .badge-post {
+            background: #198754;
+            color: white;
+        }
+
+        .badge-get {
+            background: #0d6efd;
+            color: white;
+        }
+
+        .badge-put {
+            background: #fd7e14;
+            color: white;
+        }
+
+        .badge-del {
+            background: #dc3545;
+            color: white;
+        }
+
+        .response-area {
+            min-height: 120px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-dark bg-primary shadow-sm">
+        <div class="container-fluid">
+            <span class="navbar-brand text-white fw-bold mb-0">
+                <i class="bi bi-broadcast-pin"></i> Cliente REST - Encuestas PUCMM
+            </span>
+            <span class="badge bg-light text-primary fw-semibold">JWT Activo</span>
+        </div>
+    </nav>
+
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar col-md-2 p-3 d-none d-md-block">
+            <h6 class="text-primary fw-bold mb-3">
+                <i class="bi bi-broadcast"></i> API REST
+            </h6>
+            <hr>
+            <nav class="nav flex-column">
+                <a class="nav-link active" onclick="mostrarPanel('auth')">
+                    <i class="bi bi-key"></i> Autenticación
+                </a>
+                <a class="nav-link" onclick="mostrarPanel('listar')">
+                    <i class="bi bi-list-ul"></i> Listar Encuestas
+                </a>
+                <a class="nav-link" onclick="mostrarPanel('crear')">
+                    <i class="bi bi-plus-circle"></i> Crear Encuesta
+                </a>
+                <a class="nav-link" onclick="mostrarPanel('usuario')">
+                    <i class="bi bi-person"></i> Por Usuario
+                </a>
+            </nav>
+            <hr class="mt-3">
+            <div class="small text-muted">
+                <div>Token JWT:</div>
+                <div id="tokenStatus" class="badge bg-danger mt-1">Sin token</div>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="col-md-10 p-4">
+            <div class="d-flex align-items-center mb-3">
+                <div>
+                    <h4 class="fw-bold mb-0">
+                        <i class="bi bi-broadcast text-primary"></i> Cliente REST - Encuestas PUCMM
+                    </h4>
+                    <p class="text-muted small mb-0">Interfaz de prueba para el API RESTful con JWT</p>
+                </div>
+            </div>
+
+            <div class="alert alert-light border mb-3 small text-muted">
+                <strong>Checklist práctica:</strong> JWT en REST, listado por usuario, creación de formulario con imagen
+                Base64 y cliente visual (no consola).
+            </div>
+
+            <!-- Config servidor -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-body d-flex gap-2 align-items-center">
+                    <label class="fw-semibold text-nowrap">Servidor Base:</label>
+                    <input type="text" id="baseUrl" class="form-control form-control-sm" value="http://localhost:7770"
+                        style="max-width:280px;">
+                    <button onclick="testConexion()" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-wifi"></i> Test
+                    </button>
+                    <span id="connStatus" class="small text-muted"></span>
+                </div>
+            </div>
+
+            <!-- Mobile tabs -->
+            <div class="d-md-none mb-3">
+                <select class="form-select" onchange="mostrarPanel(this.value)">
+                    <option value="auth">🔑 Autenticación</option>
+                    <option value="listar">📋 Listar Encuestas</option>
+                    <option value="crear">➕ Crear Encuesta</option>
+                    <option value="usuario">👤 Por Usuario</option>
+                </select>
+            </div>
+
+            <!-- PANEL: Auth -->
+            <div id="panel-auth" class="panel active">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header d-flex align-items-center gap-2">
+                        <span class="badge-method badge-post">POST</span>
+                        <code>/api/auth/login</code>
+                        <span class="ms-auto text-muted small">Obtener Token JWT</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Usuario</label>
+                                <input type="text" id="authUser" class="form-control" value="admin">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Contraseña</label>
+                                <input type="password" id="authPass" class="form-control" value="123456">
+                            </div>
+                        </div>
+                        <button onclick="hacerLogin()" class="btn btn-primary">
+                            <i class="bi bi-box-arrow-in-right"></i> Hacer Login
+                        </button>
+                    </div>
+                    <div class="card-footer">
+                        <label class="fw-semibold small">Respuesta:</label>
+                        <pre id="resAuth" class="response-area mb-0">// Aquí verás la respuesta del servidor</pre>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex align-items-center gap-2">
+                        <span class="badge-method badge-post">POST</span>
+                        <code>/api/auth/register</code>
+                        <span class="ms-auto text-muted small">Registrar Usuario</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label">Nombre</label>
+                                <input type="text" id="regNombre" class="form-control" placeholder="Nombre completo">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Username</label>
+                                <input type="text" id="regUser" class="form-control" placeholder="usuario">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Password</label>
+                                <input type="password" id="regPass" class="form-control" placeholder="min 6 chars">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Rol</label>
+                                <select id="regRol" class="form-select">
+                                    <option value="encuestador">Encuestador</option>
+                                    <option value="supervisor">Supervisor</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="hacerRegistro()" class="btn btn-success">
+                            <i class="bi bi-person-plus"></i> Registrar
+                        </button>
+                    </div>
+                    <div class="card-footer">
+                        <pre id="resRegistro" class="response-area mb-0">// Respuesta aquí</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL: Listar -->
+            <div id="panel-listar" class="panel">
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex align-items-center gap-2">
+                        <span class="badge-method badge-get">GET</span>
+                        <code>/api/surveys</code>
+                        <span class="ms-auto text-muted small">Requiere JWT</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">Lista todas las encuestas del servidor. Requiere token JWT.</p>
+                        <button onclick="listarTodas()" class="btn btn-primary">
+                            <i class="bi bi-arrow-clockwise"></i> Obtener Encuestas
+                        </button>
+                    </div>
+                    <div class="card-footer">
+                        <pre id="resListar" class="response-area mb-0">// Respuesta aquí</pre>
+                    </div>
+                </div>
+
+                <!-- Tabla de resultados -->
+                <div id="tablaContainer" class="mt-3 d-none">
+                    <div class="card shadow-sm">
+                        <div class="card-header fw-bold"><i class="bi bi-table"></i> Resultados</div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 small">
+                                    <thead class="table-primary">
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Sector</th>
+                                            <th>Nivel</th>
+                                            <th>Usuario</th>
+                                            <th>Fecha</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL: Crear -->
+            <div id="panel-crear" class="panel">
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex align-items-center gap-2">
+                        <span class="badge-method badge-post">POST</span>
+                        <code>/api/surveys</code>
+                        <span class="ms-auto text-muted small">Requiere JWT</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label">Nombre del Encuestado</label>
+                                <input type="text" id="crNombre" class="form-control" placeholder="Juan Pérez">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Sector</label>
+                                <input type="text" id="crSector" class="form-control" placeholder="Centro">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Nivel Escolar</label>
+                                <select id="crNivel" class="form-select">
+                                    <option value="Básico">Básico</option>
+                                    <option value="Medio">Medio</option>
+                                    <option value="Grado Universitario">Grado Universitario</option>
+                                    <option value="Postgrado">Postgrado</option>
+                                    <option value="Doctorado">Doctorado</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Latitud</label>
+                                <input type="number" id="crLat" class="form-control" value="19.4517" step="0.0001">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Longitud</label>
+                                <input type="number" id="crLon" class="form-control" value="-70.6970" step="0.0001">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Imagen (archivo a Base64)</label>
+                                <input type="file" id="crImgFile" class="form-control" accept="image/*"
+                                    onchange="cargarImagenBase64(event)">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Imagen Base64</label>
+                                <textarea id="crImgBase64" class="form-control" rows="3"
+                                    placeholder="data:image/png;base64,..."></textarea>
+                            </div>
+                        </div>
+                        <button onclick="crearEncuesta()" class="btn btn-success">
+                            <i class="bi bi-plus-circle"></i> Crear Encuesta
+                        </button>
+                    </div>
+                    <div class="card-footer">
+                        <pre id="resCrear" class="response-area mb-0">// Respuesta aquí</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL: Por Usuario -->
+            <div id="panel-usuario" class="panel">
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex align-items-center gap-2">
+                        <span class="badge-method badge-get">GET</span>
+                        <code>/api/surveys/usuario/{usuario}</code>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex gap-2">
+                            <input type="text" id="buscarUsuario" class="form-control" placeholder="Nombre de usuario"
+                                style="max-width:250px;">
+                            <button onclick="listarPorUsuario()" class="btn btn-primary">
+                                <i class="bi bi-search"></i> Buscar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <pre id="resUsuario" class="response-area mb-0">// Respuesta aquí</pre>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /main -->
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Tomar token y usuario de la sesión activa
+        let jwtToken = localStorage.getItem('survey_token') || null;
+
+        // Si no hay sesión, redirigir a login
+        if (!jwtToken) {
+            window.location.replace('/login.html');
+        }
+
+        // Mostrar estado del token al cargar
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('baseUrl').value = window.location.origin;
+            if (jwtToken) {
+                document.getElementById('tokenStatus').textContent = '✓ Token activo';
+                document.getElementById('tokenStatus').className = 'badge bg-success mt-1';
+                // Pre-llenar usuario de búsqueda con el usuario actual
+                const u = localStorage.getItem('survey_username');
+                if (u) document.getElementById('buscarUsuario').value = u;
+            }
+            actualizarControlRolRegistro();
+        });
+
+        function getBase() {
+            return document.getElementById('baseUrl').value.trim().replace(/\/$/, '');
+        }
+
+        function actualizarControlRolRegistro() {
+            const rolActual = localStorage.getItem('survey_rol');
+            const selRol = document.getElementById('regRol');
+            if (!selRol) return;
+
+            const esAdmin = rolActual === 'admin';
+            selRol.disabled = !esAdmin;
+
+            if (!esAdmin) {
+                selRol.value = 'encuestador';
+            }
+        }
+
+        function cargarImagenBase64(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const maxW = 1280;
+                    const scale = Math.min(1, maxW / img.width);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.round(img.width * scale);
+                    canvas.height = Math.round(img.height * scale);
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                    // JPEG calidad media para reducir peso del payload.
+                    const b64 = canvas.toDataURL('image/jpeg', 0.72);
+                    document.getElementById('crImgBase64').value = b64;
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function mostrarPanel(id) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.sidebar .nav-link').forEach(a => a.classList.remove('active'));
+            document.getElementById('panel-' + id).classList.add('active');
+        }
+
+        function mostrarJSON(elementId, data, status) {
+            const el = document.getElementById(elementId);
+            const statusClass = status >= 200 && status < 300 ? 'color:#4ec9b0' : 'color:#f44747';
+            el.innerHTML = `<span style="${statusClass}">// HTTP ${status}</span>\n` +
+                JSON.stringify(data, null, 2);
+        }
+
+        async function testConexion() {
+            try {
+                const res = await fetch(getBase() + '/health');
+                const data = await res.json();
+                document.getElementById('connStatus').innerHTML =
+                    `<span class="text-success">✓ Servidor activo</span>`;
+            } catch (e) {
+                document.getElementById('connStatus').innerHTML =
+                    `<span class="text-danger">✗ No se puede conectar</span>`;
+            }
+        }
+
+        async function hacerLogin() {
+            const username = document.getElementById('authUser').value;
+            const password = document.getElementById('authPass').value;
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                mostrarJSON('resAuth', data, res.status);
+
+                if (res.ok && data.token) {
+                    jwtToken = data.token;
+                    localStorage.setItem('survey_token', data.token);
+                    localStorage.setItem('survey_username', data.username);
+                    localStorage.setItem('survey_nombre', data.nombre);
+                    localStorage.setItem('survey_rol', data.rol);
+                    document.getElementById('tokenStatus').textContent = '✓ Token OK';
+                    document.getElementById('tokenStatus').className = 'badge bg-success mt-1';
+                    actualizarControlRolRegistro();
+                }
+            } catch (e) {
+                document.getElementById('resAuth').textContent = 'Error: ' + e.message;
+            }
+        }
+
+        async function hacerRegistro() {
+            const body = {
+                nombre: document.getElementById('regNombre').value,
+                username: document.getElementById('regUser').value,
+                password: document.getElementById('regPass').value,
+                rol: document.getElementById('regRol').value
+            };
+            try {
+                const res = await fetch(getBase() + '/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(jwtToken ? { 'Authorization': 'Bearer ' + jwtToken } : {})
+                    },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                mostrarJSON('resRegistro', data, res.status);
+                if (res.ok && data.token) {
+                    jwtToken = data.token;
+                    document.getElementById('tokenStatus').textContent = '✓ Token OK';
+                    document.getElementById('tokenStatus').className = 'badge bg-success mt-1';
+                }
+            } catch (e) {
+                document.getElementById('resRegistro').textContent = 'Error: ' + e.message;
+            }
+        }
+
+        async function listarTodas() {
+            if (!jwtToken) { alert('Primero haz login para obtener el token JWT'); return; }
+            try {
+                const res = await fetch(getBase() + '/api/surveys', {
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+                const data = await res.json();
+                mostrarJSON('resListar', data, res.status);
+
+                // Mostrar en tabla si es array
+                if (Array.isArray(data) && data.length > 0) {
+                    document.getElementById('tablaContainer').classList.remove('d-none');
+                    document.getElementById('tablaBody').innerHTML = data.map(e => `
+                    <tr>
+                        <td>${e.nombre}</td>
+                        <td>${e.sector}</td>
+                        <td>${e.nivelEscolar}</td>
+                        <td>${e.usuario}</td>
+                        <td>${e.fechaRegistro ? new Date(e.fechaRegistro).toLocaleDateString() : '-'}</td>
+                    </tr>`).join('');
+                }
+            } catch (e) {
+                document.getElementById('resListar').textContent = 'Error: ' + e.message;
+            }
+        }
+
+        async function crearEncuesta() {
+            if (!jwtToken) { alert('Primero haz login'); return; }
+            const body = {
+                nombre: document.getElementById('crNombre').value,
+                sector: document.getElementById('crSector').value,
+                nivelEscolar: document.getElementById('crNivel').value,
+                latitud: parseFloat(document.getElementById('crLat').value),
+                longitud: parseFloat(document.getElementById('crLon').value),
+                imagenBase64: document.getElementById('crImgBase64').value.trim() || null
+            };
+            try {
+                const res = await fetch(getBase() + '/api/surveys', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + jwtToken
+                    },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                mostrarJSON('resCrear', data, res.status);
+            } catch (e) {
+                document.getElementById('resCrear').textContent = 'Error: ' + e.message;
+            }
+        }
+
+        async function listarPorUsuario() {
+            if (!jwtToken) { alert('Primero haz login'); return; }
+            const usuario = document.getElementById('buscarUsuario').value.trim();
+            if (!usuario) { alert('Ingresa un nombre de usuario'); return; }
+            try {
+                const res = await fetch(getBase() + '/api/surveys/usuario/' + usuario, {
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+                const data = await res.json();
+                mostrarJSON('resUsuario', data, res.status);
+            } catch (e) {
+                document.getElementById('resUsuario').textContent = 'Error: ' + e.message;
+            }
+        }
+    </script>
+</body>
+
+</html>

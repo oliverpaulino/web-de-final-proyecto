@@ -246,9 +246,12 @@
             }
         }
 
-        // Enter en password hace login
+        // Enter solo en campos de login hace login
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') hacerLogin();
+            if (e.key !== 'Enter') return;
+            const targetId = e.target && e.target.id ? e.target.id : '';
+            const enLogin = targetId === 'loginUsername' || targetId === 'loginPassword';
+            if (enLogin) hacerLogin();
         });
 
     </script>
