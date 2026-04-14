@@ -28,6 +28,7 @@ message SurveyResponse {
   double latitud = 8;
   double longitud = 9;
   string fecha = 10;
+  string imagen_base64 = 11;
 }
 
 message UserRequest {

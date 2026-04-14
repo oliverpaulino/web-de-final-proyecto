@@ -20,6 +20,7 @@ public class SurveyGrpcServer {
 
     public void start() throws Exception {
         server = ServerBuilder.forPort(puerto)
+                .maxInboundMessageSize(10_000_000)
                 .addService(new SurveyGrpcService())
                 .build()
                 .start();

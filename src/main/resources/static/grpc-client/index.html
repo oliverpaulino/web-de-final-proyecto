@@ -20,6 +20,7 @@
             overflow-y: auto;
             font-family: 'Consolas', 'Courier New', monospace;
         }
+
         .stream-log {
             background: #0f0f15;
             border-radius: 8px;
@@ -29,9 +30,18 @@
             font-size: 0.8rem;
             font-family: 'Consolas', 'Courier New', monospace;
         }
-        .log-ok  { color: #4af626; }
-        .log-err { color: #ff5252; }
-        .log-info{ color: #40c4ff; }
+
+        .log-ok {
+            color: #4af626;
+        }
+
+        .log-err {
+            color: #ff5252;
+        }
+
+        .log-info {
+            color: #40c4ff;
+        }
     </style>
     <script>
         // Si no hay sesión, redirigir a login
@@ -43,358 +53,455 @@
 
 <body class="bg-light">
 
-<nav class="navbar navbar-dark bg-primary fixed-top shadow">
-    <div class="container-fluid">
+    <nav class="navbar navbar-dark bg-primary fixed-top shadow">
+        <div class="container-fluid">
             <span class="navbar-brand fw-bold">
                 <i class="bi bi-lightning-charge-fill text-warning"></i> Cliente gRPC Proxy
             </span>
-        <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2">
                 <span id="estadoConexion" class="badge bg-secondary">
                     <i class="bi bi-wifi-off"></i> Desconectado
                 </span>
-            <div class="dropdown">
-                <button class="btn btn-outline-light btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-                    <i class="bi bi-person-circle"></i> <span id="navUsuario">Usuario</span>
+                <div class="dropdown">
+                    <button class="btn btn-outline-light btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle"></i> <span id="navUsuario">Usuario</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="/index.html">
+                                <i class="bi bi-house"></i> Volver a la App
+                            </a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a class="dropdown-item text-danger" onclick="logout()">
+                                <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-5 pt-3 pb-5">
+
+        <ul class="nav nav-tabs nav-fill mt-2 px-2" id="mainTabs">
+            <li class="nav-item">
+                <button class="nav-link active" onclick="mostrarSeccion('Config')" id="tabConfig">
+                    <i class="bi bi-gear"></i> Servidor & Log
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li>
-                        <a class="dropdown-item" href="/index.html">
-                            <i class="bi bi-house"></i> Volver a la App
-                        </a>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <a class="dropdown-item text-danger" onclick="logout()">
-                            <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</nav>
-
-<div class="container-fluid mt-5 pt-3 pb-5">
-
-    <ul class="nav nav-tabs nav-fill mt-2 px-2" id="mainTabs">
-        <li class="nav-item">
-            <button class="nav-link active" onclick="mostrarSeccion('Config')" id="tabConfig">
-                <i class="bi bi-gear"></i> Servidor & Log
-            </button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link" onclick="mostrarSeccion('Listar')" id="tabListar">
-                <i class="bi bi-list-ul"></i> Listar RPC
-            </button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link" onclick="mostrarSeccion('Crear')" id="tabCrear">
-                <i class="bi bi-plus-circle"></i> Crear RPC
-            </button>
-        </li>
-    </ul>
-
-    <div id="secConfig" class="seccion p-3">
-
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white">
-                <h6 class="mb-0"><i class="bi bi-router"></i> Configuración Servidor Proxy</h6>
-            </div>
-            <div class="card-body">
-                <div class="row align-items-end g-2">
-                    <div class="col-md-8">
-                        <label class="form-label fw-semibold">URL del Servidor Backend</label>
-                        <input type="text" id="grpcUrl" class="form-control form-control-lg" value="http://localhost:8080">
-                    </div>
-                    <div class="col-md-4">
-                        <button onclick="probarConexion()" class="btn btn-success btn-lg w-100 fw-bold">
-                            <i class="bi bi-plug"></i> Conectar
-                        </button>
-                    </div>
-                </div>
-                <div class="mt-2 text-end">
-                    <span id="pingMs" class="badge bg-light text-success border"></span>
-                </div>
-            </div>
-        </div>
-
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                <h6 class="mb-0"><i class="bi bi-terminal"></i> Log de Actividad</h6>
-                <button onclick="limpiarLog()" class="btn btn-outline-light btn-sm">
-                    <i class="bi bi-trash"></i> Limpiar
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" onclick="mostrarSeccion('Listar')" id="tabListar">
+                    <i class="bi bi-list-ul"></i> Listar RPC
                 </button>
-            </div>
-            <div class="card-body p-0">
-                <div id="streamLog" class="stream-log m-2">
-                    <span class="log-info">[Proxy Client] Iniciado. Configura el servidor y haz click en Conectar.</span><br>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" onclick="mostrarSeccion('Crear')" id="tabCrear">
+                    <i class="bi bi-plus-circle"></i> Crear RPC
+                </button>
+            </li>
+        </ul>
+
+        <div id="secConfig" class="seccion p-3">
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="bi bi-router"></i> Configuración Servidor Proxy</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-end g-2">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">URL del Servidor Backend</label>
+                            <input type="text" id="grpcUrl" class="form-control form-control-lg"
+                                value="http://localhost:7770" disabled>
+                        </div>
+                        <div class="col-md-4">
+                            <button onclick="probarConexion()" class="btn btn-success btn-lg w-100 fw-bold">
+                                <i class="bi bi-plug"></i> Conectar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-end">
+                        <span id="pingMs" class="badge bg-light text-success border"></span>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="alert alert-info shadow-sm">
-            <h6 class="fw-bold"><i class="bi bi-info-circle"></i> Nota de Implementación (Proxy Javalin)</h6>
-            <p class="small mb-2">
-                Este cliente consume los endpoints REST proxy configurados en Javalin. Javalin se encarga de crear el canal y llamar a los stubs de gRPC internamente. El flujo exacto es:
-            </p>
-            <code class="d-block bg-white p-2 rounded border border-info mb-2">
-                Navegador → REST (Javalin :8080/api/surveys-grpc-proxy) → gRPC Stub → Servidor gRPC Java (:9090)
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="bi bi-terminal"></i> Log de Actividad</h6>
+                    <button onclick="limpiarLog()" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-trash"></i> Limpiar
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div id="streamLog" class="stream-log m-2">
+                        <span class="log-info">[Proxy Client] Iniciado. Configura el servidor y haz click en
+                            Conectar.</span><br>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-info shadow-sm">
+                <h6 class="fw-bold"><i class="bi bi-info-circle"></i> Nota de Implementación (Proxy Javalin)</h6>
+                <p class="small mb-2">
+                    Este cliente consume los endpoints REST proxy configurados en Javalin. Javalin se encarga de crear
+                    el canal y llamar a los stubs de gRPC internamente. El flujo exacto es:
+                </p>
+                <code class="d-block bg-white p-2 rounded border border-info mb-2">
+                Navegador → REST (Javalin :7770/api/surveys-grpc-proxy) → gRPC Stub → Servidor gRPC Java (:9090)
             </code>
-        </div>
-    </div>
-
-    <div id="secListar" class="seccion p-3 d-none">
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h6 class="mb-0"><i class="bi bi-cloud-arrow-down"></i> ListarFormularios</h6>
-                <span class="badge bg-light text-primary">PROXY A UNARY RPC</span>
             </div>
-            <div class="card-body">
-                <p class="text-muted small mb-3">
-                    Ejecuta una petición al endpoint proxy para recuperar los formularios registrados por el usuario especificado mediante gRPC.
-                </p>
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Usuario a consultar <span class="text-danger">*</span></label>
-                    <input type="text" id="grpcUsuario" class="form-control form-control-lg" placeholder="ej: admin">
+        </div>
+
+        <div id="secListar" class="seccion p-3 d-none">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="bi bi-cloud-arrow-down"></i> ListarFormularios</h6>
+                    <span class="badge bg-light text-primary">PROXY A UNARY RPC</span>
                 </div>
-                <button onclick="listarFormulariosGRPC()" class="btn btn-primary btn-lg w-100 fw-bold mb-3">
-                    <i class="bi bi-lightning-charge"></i> Ejecutar Petición (Listar)
-                </button>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        Ejecuta una petición al endpoint proxy para recuperar los formularios registrados por el usuario
+                        especificado mediante gRPC.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Usuario a consultar <span
+                                class="text-danger">*</span></label>
+                        <input type="text" id="grpcUsuario" class="form-control form-control-lg"
+                            placeholder="ej: admin">
+                    </div>
+                    <button onclick="listarFormulariosGRPC()" class="btn btn-primary btn-lg w-100 fw-bold mb-3">
+                        <i class="bi bi-lightning-charge"></i> Ejecutar Petición (Listar)
+                    </button>
 
-                <label class="form-label fw-semibold mt-2">Respuesta del Servidor (JSON):</label>
-                <pre id="resListar" class="grpc-pre">// La respuesta aparecerá aquí...</pre>
-            </div>
-        </div>
-    </div>
-
-    <div id="secCrear" class="seccion p-3 d-none">
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h6 class="mb-0"><i class="bi bi-cloud-arrow-up"></i> CrearFormulario</h6>
-                <span class="badge bg-light text-primary">PROXY A UNARY RPC</span>
-            </div>
-            <div class="card-body">
-                <p class="text-muted small mb-3">
-                    Envía los datos al endpoint proxy, el cual creará un <code>SurveyRequest</code> y lo enviará vía gRPC al servidor en el puerto 9090.
-                </p>
-
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Nombre del Encuestado <span class="text-danger">*</span></label>
-                        <input type="text" id="crNombre" class="form-control" placeholder="Ej: María García">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Sector <span class="text-danger">*</span></label>
-                        <input type="text" id="crSector" class="form-control" placeholder="Ej: Centro">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Nivel Escolar <span class="text-danger">*</span></label>
-                        <select id="crNivel" class="form-select">
-                            <option value="Básico">Básico</option>
-                            <option value="Medio">Medio</option>
-                            <option value="Grado Universitario">Grado Universitario</option>
-                            <option value="Postgrado">Postgrado</option>
-                            <option value="Doctorado">Doctorado</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Usuario <span class="text-danger">*</span></label>
-                        <input type="text" id="crUsuario" class="form-control" readonly>
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label fw-semibold text-muted">Latitud</label>
-                        <input type="number" id="crLat" class="form-control" value="19.4517" step="0.0001">
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label fw-semibold text-muted">Longitud</label>
-                        <input type="number" id="crLon" class="form-control" value="-70.6970" step="0.0001">
-                    </div>
+                    <label class="form-label fw-semibold mt-2">Respuesta del Servidor (JSON):</label>
+                    <pre id="resListar" class="grpc-pre">// La respuesta aparecerá aquí...</pre>
                 </div>
-
-                <button onclick="crearFormularioGRPC()" class="btn btn-primary btn-lg w-100 fw-bold mb-3">
-                    <i class="bi bi-lightning-charge"></i> Ejecutar Petición (Crear)
-                </button>
-
-                <label class="form-label fw-semibold mt-2">Respuesta del Servidor (JSON):</label>
-                <pre id="resCrear" class="grpc-pre">// La respuesta aparecerá aquí...</pre>
             </div>
         </div>
+
+        <div id="secCrear" class="seccion p-3 d-none">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="bi bi-cloud-arrow-up"></i> CrearFormulario</h6>
+                    <span class="badge bg-light text-primary">PROXY A UNARY RPC</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        Envía los datos al endpoint proxy, el cual creará un <code>SurveyRequest</code> y lo enviará vía
+                        gRPC al servidor en el puerto 9090.
+                    </p>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nombre del Encuestado <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" id="crNombre" class="form-control" placeholder="Ej: María García">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Sector <span class="text-danger">*</span></label>
+                            <input type="text" id="crSector" class="form-control" placeholder="Ej: Centro">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nivel Escolar <span
+                                    class="text-danger">*</span></label>
+                            <select id="crNivel" class="form-select">
+                                <option value="Básico">Básico</option>
+                                <option value="Medio">Medio</option>
+                                <option value="Grado Universitario">Grado Universitario</option>
+                                <option value="Postgrado">Postgrado</option>
+                                <option value="Doctorado">Doctorado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Usuario <span class="text-danger">*</span></label>
+                            <input type="text" id="crUsuario" class="form-control" readonly>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold text-muted">Latitud</label>
+                            <input type="number" id="crLat" class="form-control" value="19.4517" step="0.0001">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold text-muted">Longitud</label>
+                            <input type="number" id="crLon" class="form-control" value="-70.6970" step="0.0001">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Imagen de la Encuesta (opcional)</label>
+                            <input type="file" id="crImagenFile" class="form-control" accept="image/*"
+                                onchange="convertirImagenGrpc()">
+                            <small class="text-muted">Se convierte a Base64 antes de enviar al proxy gRPC.</small>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Imagen Base64 (opcional)</label>
+                            <textarea id="crImagenBase64" class="form-control" rows="3"
+                                placeholder="Se llenará automáticamente al elegir un archivo, o puedes pegar el Base64 aquí"></textarea>
+                        </div>
+                    </div>
+
+                    <button onclick="crearFormularioGRPC()" class="btn btn-primary btn-lg w-100 fw-bold mb-3">
+                        <i class="bi bi-lightning-charge"></i> Ejecutar Petición (Crear)
+                    </button>
+
+                    <label class="form-label fw-semibold mt-2">Respuesta del Servidor (JSON):</label>
+                    <pre id="resCrear" class="grpc-pre">// La respuesta aparecerá aquí...</pre>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-</div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-    // Lógica de pestañas para imitar la aplicación principal
-    function mostrarSeccion(id) {
-        document.querySelectorAll('.seccion').forEach(s => s.classList.add('d-none'));
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        document.getElementById('sec' + id).classList.remove('d-none');
-        document.getElementById('tab' + id).classList.add('active');
-    }
-
-    // Lógica para Logout
-    function logout() {
-        localStorage.removeItem('survey_token');
-        localStorage.removeItem('survey_username');
-        window.location.replace('/login.html');
-    }
-
-    // Variables Globales
-    const logEl = document.getElementById('streamLog');
-    const JWT_TOKEN = localStorage.getItem('survey_token') || '';
-    const USUARIO_ACTUAL = localStorage.getItem('survey_username') || 'Invitado';
-    const SERVER_BASE = "http://localhost:7770";
-
-    // Inicialización
-    document.addEventListener('DOMContentLoaded', () => {
-        // Llenar datos de usuario en la UI
-        document.getElementById('navUsuario').textContent = USUARIO_ACTUAL;
-
-        const u = document.getElementById('grpcUsuario');
-        if (u && !u.value) u.value = USUARIO_ACTUAL;
-
-        const cu = document.getElementById('crUsuario');
-        if (cu && !cu.value) cu.value = USUARIO_ACTUAL;
-    });
-
-    // Funciones de utilidad
-    function log(msg, tipo = 'info') {
-        const ts = new Date().toLocaleTimeString();
-        const cls = { info: 'log-info', ok: 'log-ok', err: 'log-err' }[tipo] || 'log-info';
-        logEl.innerHTML += `<span class="${cls}">[${ts}] ${msg}</span><br>`;
-        logEl.scrollTop = logEl.scrollHeight;
-    }
-
-    function limpiarLog() {
-        logEl.innerHTML = '<span class="log-info">[Proxy Client] Log limpiado.</span><br>';
-    }
-
-    function authHeader() {
-        return { 'Authorization': 'Bearer ' + JWT_TOKEN };
-    }
-
-    // Conexión
-    async function probarConexion() {
-        log('Probando conexión al servidor...', 'info');
-        const estadoBadge = document.getElementById('estadoConexion');
-        const t0 = Date.now();
-        try {
-            const res = await fetch(SERVER_BASE + '/health', { signal: AbortSignal.timeout(5000) });
-            const ms  = Date.now() - t0;
-            if (res.ok) {
-                estadoBadge.className = 'badge bg-success';
-                estadoBadge.innerHTML = '<i class="bi bi-wifi"></i> Conectado';
-                document.getElementById('pingMs').textContent   = `Ping: ${ms}ms`;
-                log(`Servidor disponible — ${ms}ms`, 'ok');
-            } else {
-                throw new Error('HTTP ' + res.status);
-            }
-        } catch (e) {
-            estadoBadge.className = 'badge bg-danger';
-            estadoBadge.innerHTML = '<i class="bi bi-wifi-off"></i> Error';
-            log('Error de conexión: ' + e.message, 'err');
+    <script>
+        // Lógica de pestañas para imitar la aplicación principal
+        function mostrarSeccion(id) {
+            document.querySelectorAll('.seccion').forEach(s => s.classList.add('d-none'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            document.getElementById('sec' + id).classList.remove('d-none');
+            document.getElementById('tab' + id).classList.add('active');
         }
-    }
 
-    // Llamada a Proxy: Listar Formularios
-    async function listarFormulariosGRPC() {
-        const usuario = document.getElementById('grpcUsuario').value.trim();
-        if (!usuario) { log('ERROR: Ingresa un usuario', 'err'); return; }
+        // Lógica para Logout
+        function logout() {
+            localStorage.removeItem('survey_token');
+            localStorage.removeItem('survey_username');
+            window.location.replace('/login.html');
+        }
 
-        log(`→ GET /api/surveys-grpc-proxy/usuario/${usuario}`, 'info');
+        // Variables Globales
+        const logEl = document.getElementById('streamLog');
+        const JWT_TOKEN = localStorage.getItem('survey_token') || '';
+        const USUARIO_ACTUAL = localStorage.getItem('survey_username') || 'Invitado';
+        const SERVER_BASE = "http://localhost:7770";
 
-        try {
-            const t0  = Date.now();
-            // Endpoint Proxy actualizado
-            const res = await fetch(
-                SERVER_BASE + '/api/surveys-grpc-proxy/usuario/' + encodeURIComponent(usuario),
-                { headers: authHeader() }
-            );
-            const ms  = Date.now() - t0;
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            // Llenar datos de usuario en la UI
+            document.getElementById('navUsuario').textContent = USUARIO_ACTUAL;
 
-            if (res.status === 401) {
-                log('Token expirado — redirigiendo a login...', 'err');
-                setTimeout(logout, 1000);
+            const u = document.getElementById('grpcUsuario');
+            if (u && !u.value) u.value = USUARIO_ACTUAL;
+
+            const cu = document.getElementById('crUsuario');
+            if (cu && !cu.value) cu.value = USUARIO_ACTUAL;
+        });
+
+        // Funciones de utilidad
+        function log(msg, tipo = 'info') {
+            const ts = new Date().toLocaleTimeString();
+            const cls = { info: 'log-info', ok: 'log-ok', err: 'log-err' }[tipo] || 'log-info';
+            logEl.innerHTML += `<span class="${cls}">[${ts}] ${msg}</span><br>`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function limpiarLog() {
+            logEl.innerHTML = '<span class="log-info">[Proxy Client] Log limpiado.</span><br>';
+        }
+
+        function authHeader() {
+            return { 'Authorization': 'Bearer ' + JWT_TOKEN };
+        }
+
+        async function leerRespuestaApi(res) {
+            const contentType = res.headers.get('content-type') || '';
+            const text = await res.text();
+
+            if (!text) {
+                return null;
+            }
+
+            if (contentType.includes('application/json')) {
+                return JSON.parse(text);
+            }
+
+            const trimmed = text.trim();
+            if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                try {
+                    return JSON.parse(trimmed);
+                } catch (e) {
+                    return trimmed;
+                }
+            }
+
+            return trimmed;
+        }
+
+        // Conexión
+        async function probarConexion() {
+            log('Probando conexión al servidor...', 'info');
+            const estadoBadge = document.getElementById('estadoConexion');
+            const t0 = Date.now();
+            try {
+                const res = await fetch(SERVER_BASE + '/health', { signal: AbortSignal.timeout(5000) });
+                const ms = Date.now() - t0;
+                if (res.ok) {
+                    estadoBadge.className = 'badge bg-success';
+                    estadoBadge.innerHTML = '<i class="bi bi-wifi"></i> Conectado';
+                    document.getElementById('pingMs').textContent = `Ping: ${ms}ms`;
+                    log(`Servidor disponible — ${ms}ms`, 'ok');
+                } else {
+                    throw new Error('HTTP ' + res.status);
+                }
+            } catch (e) {
+                estadoBadge.className = 'badge bg-danger';
+                estadoBadge.innerHTML = '<i class="bi bi-wifi-off"></i> Error';
+                log('Error de conexión: ' + e.message, 'err');
+            }
+        }
+
+        function convertirImagenGrpc() {
+            const fileInput = document.getElementById('crImagenFile');
+            const out = document.getElementById('crImagenBase64');
+            const file = fileInput.files[0];
+            if (!file) {
+                out.value = '';
                 return;
             }
 
-            const data = await res.json();
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.onload = function () {
+                    const maxWidth = 1280;
+                    const scale = Math.min(1, maxWidth / img.width);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.round(img.width * scale);
+                    canvas.height = Math.round(img.height * scale);
 
-            // Damos formato a la respuesta para el log visual
-            const formattedResponse = {
-                'ProxyResponse': {
-                    encuestas: data,
-                    total: Array.isArray(data) ? data.length : 0
-                },
-                _metadata: { rtt_ms: ms, backend: 'Javalin Proxy → gRPC' }
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
+                    out.value = dataUrl;
+                    log('Imagen comprimida y convertida a Base64 para Create RPC', 'ok');
+                };
+                img.onerror = function () {
+                    out.value = '';
+                    log('No se pudo procesar la imagen seleccionada', 'err');
+                };
+                img.src = String(e.target.result || '');
             };
-
-            document.getElementById('resListar').textContent = JSON.stringify(formattedResponse, null, 2);
-            log(`← Petición OK — ${formattedResponse.ProxyResponse.total} registros en ${ms}ms`, 'ok');
-
-        } catch (e) {
-            document.getElementById('resListar').textContent = 'Error: ' + e.message;
-            log('Petición falló: ' + e.message, 'err');
-        }
-    }
-
-    // Llamada a Proxy: Crear Formulario
-    async function crearFormularioGRPC() {
-        const nombre  = document.getElementById('crNombre').value.trim();
-        const sector  = document.getElementById('crSector').value.trim();
-        const nivel   = document.getElementById('crNivel').value;
-        const usuario = document.getElementById('crUsuario').value.trim() || USUARIO_ACTUAL;
-        const lat     = parseFloat(document.getElementById('crLat').value);
-        const lon     = parseFloat(document.getElementById('crLon').value);
-
-        if (!nombre || !sector) {
-            log('ERROR: Nombre y sector son requeridos', 'err');
-            return;
+            reader.onerror = function () {
+                out.value = '';
+                log('No se pudo convertir la imagen seleccionada', 'err');
+            };
+            reader.readAsDataURL(file);
         }
 
-        log(`→ POST /api/surveys-grpc-proxy ({ nombre:"${nombre}", sector:"${sector}", nivelEscolar:"${nivel}" })`, 'info');
+        // Llamada a Proxy: Listar Formularios
+        async function listarFormulariosGRPC() {
+            const usuario = document.getElementById('grpcUsuario').value.trim();
+            if (!usuario) { log('ERROR: Ingresa un usuario', 'err'); return; }
 
-        try {
-            const t0  = Date.now();
-            // Endpoint Proxy actualizado
-            const res = await fetch(SERVER_BASE + '/api/surveys-grpc-proxy', {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json', ...authHeader() },
-                body:    JSON.stringify({ nombre, sector, nivelEscolar: nivel, usuario, latitud: lat, longitud: lon })
-            });
-            const ms   = Date.now() - t0;
+            log(`→ GET /api/surveys-grpc-proxy/usuario/${usuario}`, 'info');
 
-            if (res.status === 401) {
-                log('Token expirado — redirigiendo a login...', 'err');
-                setTimeout(logout, 1000);
+            try {
+                const t0 = Date.now();
+                // Endpoint Proxy actualizado
+                const res = await fetch(
+                    SERVER_BASE + '/api/surveys-grpc-proxy/usuario/' + encodeURIComponent(usuario),
+                    { headers: authHeader() }
+                );
+                const ms = Date.now() - t0;
+
+                if (res.status === 401) {
+                    log('Token expirado — redirigiendo a login...', 'err');
+                    setTimeout(logout, 1000);
+                    return;
+                }
+
+                const data = await leerRespuestaApi(res);
+
+                // Damos formato a la respuesta para el log visual
+                const formattedResponse = {
+                    'ProxyResponse': {
+                        encuestas: data,
+                        total: Array.isArray(data) ? data.length : 0
+                    },
+                    _metadata: { rtt_ms: ms, backend: 'Javalin Proxy → gRPC' }
+                };
+
+                document.getElementById('resListar').textContent = JSON.stringify(formattedResponse, null, 2);
+                log(`← Petición OK — ${formattedResponse.ProxyResponse.total} registros en ${ms}ms`, 'ok');
+
+            } catch (e) {
+                document.getElementById('resListar').textContent = 'Error: ' + e.message;
+                log('Petición falló: ' + e.message, 'err');
+            }
+        }
+
+        // Llamada a Proxy: Crear Formulario
+        async function crearFormularioGRPC() {
+            const nombre = document.getElementById('crNombre').value.trim();
+            const sector = document.getElementById('crSector').value.trim();
+            const nivel = document.getElementById('crNivel').value;
+            const usuario = document.getElementById('crUsuario').value.trim() || USUARIO_ACTUAL;
+            const lat = parseFloat(document.getElementById('crLat').value);
+            const lon = parseFloat(document.getElementById('crLon').value);
+            const imagenBase64 = document.getElementById('crImagenBase64').value.trim();
+
+            if (!nombre || !sector) {
+                log('ERROR: Nombre y sector son requeridos', 'err');
                 return;
             }
 
-            const data = await res.json();
+            log(`→ POST /api/surveys-grpc-proxy ({ nombre:"${nombre}", sector:"${sector}", nivelEscolar:"${nivel}" })`, 'info');
 
-            const formattedResponse = {
-                'ProxyResponse': data,
-                _metadata: { rtt_ms: ms, backend: 'Javalin Proxy → gRPC' }
-            };
+            try {
+                const t0 = Date.now();
+                // Endpoint Proxy actualizado
+                const res = await fetch(SERVER_BASE + '/api/surveys-grpc-proxy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...authHeader() },
+                    body: JSON.stringify({
+                        nombre,
+                        sector,
+                        nivelEscolar: nivel,
+                        usuario,
+                        latitud: lat,
+                        longitud: lon,
+                        imagenBase64
+                    })
+                });
+                const ms = Date.now() - t0;
 
-            document.getElementById('resCrear').textContent = JSON.stringify(formattedResponse, null, 2);
+                if (res.status === 401) {
+                    log('Token expirado — redirigiendo a login...', 'err');
+                    setTimeout(logout, 1000);
+                    return;
+                }
 
-            if (res.ok && data.success) {
-                log(`← Creación OK en ${ms}ms — ID devuelto: ${data.id}`, 'ok');
-                // Limpiar campos luego de éxito
-                document.getElementById('crNombre').value = '';
-                document.getElementById('crSector').value = '';
-            } else {
-                log(`← Creación falló HTTP ${res.status}: ${data.mensaje || 'Error desconocido'}`, 'err');
+                const data = await leerRespuestaApi(res);
+
+                const formattedResponse = {
+                    'ProxyResponse': data,
+                    _metadata: { rtt_ms: ms, backend: 'Javalin Proxy → gRPC' }
+                };
+
+                document.getElementById('resCrear').textContent = JSON.stringify(formattedResponse, null, 2);
+
+                if (res.ok && data.success) {
+                    log(`← Creación OK en ${ms}ms — ID devuelto: ${data.id}`, 'ok');
+                    // Limpiar campos luego de éxito
+                    document.getElementById('crNombre').value = '';
+                    document.getElementById('crSector').value = '';
+                    document.getElementById('crImagenBase64').value = '';
+                    document.getElementById('crImagenFile').value = '';
+                } else {
+                    log(`← Creación falló HTTP ${res.status}: ${data.mensaje || 'Error desconocido'}`, 'err');
+                }
+
+            } catch (e) {
+                document.getElementById('resCrear').textContent = 'Error: ' + e.message;
+                log('Petición falló: ' + e.message, 'err');
             }
-
-        } catch (e) {
-            document.getElementById('resCrear').textContent = 'Error: ' + e.message;
-            log('Petición falló: ' + e.message, 'err');
         }
-    }
-</script>
+    </script>
 </body>
+
 </html>

@@ -33,6 +33,7 @@ public class SurveyGrpcService extends SurveyServiceGrpc.SurveyServiceImplBase {
                         .setLatitud(e.getLatitud()  != null ? e.getLatitud()  : 0.0)
                         .setLongitud(e.getLongitud() != null ? e.getLongitud() : 0.0)
                         .setFecha(e.getFechaRegistro() != null ? e.getFechaRegistro().toString() : "")
+                        .setImagenBase64(nullSafe(e.getImagenBase64()))
                         .setSuccess(true)
                         .build());
             }
@@ -58,6 +59,7 @@ public class SurveyGrpcService extends SurveyServiceGrpc.SurveyServiceImplBase {
                     request.getImagenBase64(),
                     Optional.of(new Date())
             );
+            encuesta.setSincronizado(true);
 
             Document doc = SurveyController.encuestaToDocument(encuesta);
             MongoService.getInstance().getEncuestas().insertOne(doc);
