@@ -2,8 +2,13 @@ package org.example.controllers;
 
 import org.example.Models.Encuesta;
 import org.example.services.MongoService;
+
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
+
 import io.javalin.http.Context;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import java.util.*;
 
@@ -17,6 +22,20 @@ public class SurveyController {
             ctx.json(lista);
         } catch (Exception e) {
             ctx.status(500).json(Map.of("error", "Error al listar encuestas"));
+        }
+    }
+
+    public static void listarPorUsuario(Context ctx) {
+        try {
+            String usuario = ctx.pathParam("usuario");
+            List<Encuesta> lista = new ArrayList<>();
+            for (Document doc : MongoService.getInstance().getEncuestas()
+                    .find(Filters.eq("usuario", usuario))) {
+                lista.add(documentToEncuesta(doc));
+            }
+            ctx.json(lista);
+        } catch (Exception e) {
+            ctx.status(500).json(Map.of("error", "Error al listar encuestas del usuario"));
         }
     }
 
@@ -51,6 +70,64 @@ public class SurveyController {
 
         } catch (Exception e) {
             ctx.status(500).json(Map.of("error", "Error al guardar la encuesta"));
+        }
+    }
+
+    public static void actualizar(Context ctx) {
+        try {
+            String id = ctx.pathParam("id");
+            String username = ctx.attribute("username");
+            String rol = ctx.attribute("rol");
+            Encuesta body = ctx.bodyAsClass(Encuesta.class);
+
+            MongoCollection<Document> col = MongoService.getInstance().getEncuestas();
+            Document existente = col.find(Filters.eq("_id", new ObjectId(id))).first();
+
+            if (existente == null) {
+                ctx.status(404).json(Map.of("error", "Encuesta no encontrada"));
+                return;
+            }
+            if (!existente.getString("usuario").equals(username) && !"admin".equals(rol)) {
+                ctx.status(403).json(Map.of("error", "Sin permiso para modificar este registro"));
+                return;
+            }
+
+            col.updateOne(Filters.eq("_id", new ObjectId(id)), new Document("$set", new Document()
+                    .append("nombre", body.getNombre())
+                    .append("sector", body.getSector())
+                    .append("nivelEscolar", body.getNivelEscolar())
+                    .append("fechaActualizacion", new Date())));
+
+            ctx.json(Map.of("mensaje", "Encuesta actualizada correctamente"));
+
+        } catch (Exception e) {
+            ctx.status(500).json(Map.of("error", "Error al actualizar"));
+        }
+    }
+
+    public static void eliminar(Context ctx) {
+        try {
+            String id = ctx.pathParam("id");
+            String username = ctx.attribute("username");
+            String rol = ctx.attribute("rol");
+
+            MongoCollection<Document> col = MongoService.getInstance().getEncuestas();
+            Document existente = col.find(Filters.eq("_id", new ObjectId(id))).first();
+
+            if (existente == null) {
+                ctx.status(404).json(Map.of("error", "Encuesta no encontrada"));
+                return;
+            }
+            if (!existente.getString("usuario").equals(username) && !"admin".equals(rol)) {
+                ctx.status(403).json(Map.of("error", "Sin permiso para eliminar"));
+                return;
+            }
+
+            col.deleteOne(Filters.eq("_id", new ObjectId(id)));
+            ctx.json(Map.of("mensaje", "Encuesta eliminada correctamente"));
+
+        } catch (Exception e) {
+            ctx.status(500).json(Map.of("error", "Error al eliminar"));
         }
     }
 

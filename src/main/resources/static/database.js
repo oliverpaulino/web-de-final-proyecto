@@ -95,3 +95,30 @@ function limpiarSesionLocal() {
 function tieneSesionLocal() {
    return !!localStorage.getItem('survey_token');
 }
+
+
+function actualizarEncuestaLocal(localId, datos) {
+   return new Promise((resolve, reject) => {
+      const tx = db.transaction(ST_ENC, 'readwrite');
+      const store = tx.objectStore(ST_ENC);
+      const req = store.get(localId);
+      req.onsuccess = () => {
+         const enc = req.result;
+         if (!enc) { reject(new Error('No encontrado')); return; }
+         Object.assign(enc, datos);
+         const upd = store.put(enc);
+         upd.onsuccess = () => resolve();
+         upd.onerror = () => reject(upd.error);
+      };
+      req.onerror = () => reject(req.error);
+   });
+}
+
+function eliminarEncuestaLocal(localId) {
+   return new Promise((resolve, reject) => {
+      const tx = db.transaction(ST_ENC, 'readwrite');
+      const req = tx.objectStore(ST_ENC).delete(localId);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+   });
+}

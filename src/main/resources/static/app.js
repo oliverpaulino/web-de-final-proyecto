@@ -82,14 +82,23 @@ function configurarUIPorRol() {
 }
 //mapa
 async function inicializarMapa() {
+   const loadingEl = document.getElementById('mapaLoading');
+   if (loadingEl) loadingEl.classList.remove('d-none');
+
    if (!mapaLeaflet) {
       // Santiago de los Caballeros por defecto
       mapaLeaflet = L.map('mapa').setView([19.4517, -70.6970], 12);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
          attribution: '© OpenStreetMap contributors'
       }).addTo(mapaLeaflet);
+   } else {
+      // Limpiar marcadores anteriores
+      mapaLeaflet.eachLayer((layer) => {
+         if (layer instanceof L.Marker) {
+            mapaLeaflet.removeLayer(layer);
+         }
+      });
    }
-
 
    // Marcadores rojos = locales
    const redIcon = new L.Icon({
@@ -111,42 +120,45 @@ async function inicializarMapa() {
       shadowSize: [41, 41]
    });
 
-   const locales = await obtenerEncuestasLocales();
-   locales.forEach(enc => {
-      if (enc.latitud && enc.longitud && enc.sincronizado === false) {
-         L.marker([enc.latitud, enc.longitud], { icon: redIcon })
-            .addTo(mapaLeaflet)
-            .bindPopup(`
-                    <b>${enc.nombre}</b><br>
-                    ${enc.sector} · ${enc.nivelEscolar}<br>
-                    <small class="${enc.sincronizado ? 'text-success' : 'text-warning'}">
-                        ${enc.sincronizado ? 'Sincronizado' : 'Pendiente'}
-                    </small>`);
-      }
-   });
-
-   if (estaOnline) {
-      try {
-         const res = await fetch('/api/surveys', {
-            headers: { 'Authorization': 'Bearer ' + tokenJWT }
-         });
-         if (res.status === 401) { logout(); return; }
-         const srv = await res.json();
-         if (Array.isArray(srv)) {
-            srv.forEach(enc => {
-               if (enc.latitud && enc.longitud) {
-                  L.marker([enc.latitud, enc.longitud], { icon: blueIcon })
-                     .addTo(mapaLeaflet)
-                     .bindPopup(`
-                                <b>${enc.nombre}</b><br>
-                                ${enc.sector} · ${enc.nivelEscolar}<br>
-                                <small class="text-primary">☁ Servidor</small>`);
-               }
-            });
+   try {
+      const locales = await obtenerEncuestasLocales();
+      locales.forEach(enc => {
+         if (enc.latitud && enc.longitud && enc.sincronizado === false) {
+            L.marker([enc.latitud, enc.longitud], { icon: redIcon })
+               .addTo(mapaLeaflet)
+               .bindPopup(`
+                       <b>${enc.nombre}</b><br>
+                       ${enc.sector} · ${enc.nivelEscolar}<br>
+                       <small class="${enc.sincronizado ? 'text-success' : 'text-warning'}">
+                           ${enc.sincronizado ? 'Sincronizado' : 'Pendiente'}
+                       </small>`);
          }
-      } catch { }
-   }
+      });
 
+      if (estaOnline) {
+         try {
+            const res = await fetch('/api/surveys', {
+               headers: { 'Authorization': 'Bearer ' + tokenJWT }
+            });
+            if (res.status === 401) { logout(); return; }
+            const srv = await res.json();
+            if (Array.isArray(srv)) {
+               srv.forEach(enc => {
+                  if (enc.latitud && enc.longitud) {
+                     L.marker([enc.latitud, enc.longitud], { icon: blueIcon })
+                        .addTo(mapaLeaflet)
+                        .bindPopup(`
+                                   <b>${enc.nombre}</b><br>
+                                   ${enc.sector} · ${enc.nivelEscolar}<br>
+                                   <small class="text-primary">☁ Servidor</small>`);
+                  }
+               });
+            }
+         } catch { }
+      }
+   } finally {
+      if (loadingEl) loadingEl.classList.add('d-none');
+   }
 }
 //camara
 function iniciarCamara() {
@@ -328,6 +340,16 @@ async function renderizarPendientes() {
                </div>
                 ${e.latitud ? `<p class="text-muted small mb-0 ms-auto text-end">
                             📍 ${e.latitud.toFixed(4)}, ${e.longitud.toFixed(4)}</p>` : ''}
+                            <div class="d-flex gap-2 mt-2 ml-2">
+                                    <button onclick="abrirEditar(${e.localId}, 'local')"
+                                            class="btn btn-warning btn-sm">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </button>
+                                    <button onclick="eliminarLocal(${e.localId})"
+                                            class="btn btn-danger btn-sm">
+                                        <i class="bi bi-trash"></i> Eliminar
+                                    </button>
+                                </div>
             </div>
          </div>
       `).join('');
@@ -430,10 +452,6 @@ async function cargarDelServidor() {
             ? `<img src="${enc.imagenBase64}" class="img-thumbnail mt-2" style="max-height:80px;">`
             : ''}
                     <div class="d-flex gap-2 mt-2">
-                        <button onclick="abrirEditar('${enc.id}', 'servidor')"
-                                class="btn btn-warning btn-sm">
-                            <i class="bi bi-pencil"></i> Editar
-                        </button>
                         <button onclick="eliminarServidor('${enc.id}')"
                                 class="btn btn-danger btn-sm">
                             <i class="bi bi-trash"></i> Eliminar
@@ -526,5 +544,82 @@ async function eliminarUsuario(username) {
       renderizarUsuarios();
    } catch (e) {
       mostrarAlerta(e.message, 'danger');
+   }
+}
+
+
+
+function abrirEditar(id, tipo) {
+   document.getElementById('editId').value = id;
+   document.getElementById('editTipo').value = tipo;
+
+   if (tipo === 'local') {
+      const req = db.transaction('encuestas', 'readonly')
+         .objectStore('encuestas').get(id);
+      req.onsuccess = () => {
+         if (!req.result) return;
+         document.getElementById('editNombre').value = req.result.nombre;
+         document.getElementById('editSector').value = req.result.sector;
+         document.getElementById('editNivel').value = req.result.nivelEscolar;
+      };
+   }
+
+   new bootstrap.Modal(document.getElementById('modalEditar')).show();
+}
+
+async function guardarEdicion() {
+   const id = document.getElementById('editId').value;
+   const tipo = document.getElementById('editTipo').value;
+   const datos = {
+      nombre: document.getElementById('editNombre').value.trim(),
+      sector: document.getElementById('editSector').value.trim(),
+      nivelEscolar: document.getElementById('editNivel').value
+   };
+
+   if (tipo === 'local') {
+      await actualizarEncuestaLocal(parseInt(id), datos);
+      renderizarPendientes();
+   } else {
+      try {
+         const res = await fetch(`/api/surveys/${id}`, {
+            method: 'PUT',
+            headers: {
+               'Content-Type': 'application/json',
+               'Authorization': 'Bearer ' + tokenJWT
+            },
+            body: JSON.stringify(datos)
+         });
+         if (!res.ok) throw new Error('Error del servidor');
+         cargarDelServidor();
+      } catch (e) {
+         mostrarAlerta('Error al actualizar: ' + e.message, 'danger');
+         return;
+      }
+   }
+
+   bootstrap.Modal.getInstance(document.getElementById('modalEditar')).hide();
+   mostrarAlerta('Registro actualizado', 'success');
+}
+
+async function eliminarLocal(localId) {
+   if (!confirm('¿Eliminar este registro local?')) return;
+   await eliminarEncuestaLocal(localId);
+   renderizarPendientes();
+   actualizarContadorPendientes();
+   mostrarAlerta('Registro eliminado localmente', 'info');
+}
+
+async function eliminarServidor(id) {
+   if (!confirm('¿Eliminar este registro del servidor?')) return;
+   try {
+      const res = await fetch(`/api/surveys/${id}`, {
+         method: 'DELETE',
+         headers: { 'Authorization': 'Bearer ' + tokenJWT }
+      });
+      if (!res.ok) throw new Error('Error del servidor');
+      cargarDelServidor();
+      mostrarAlerta('Eliminado del servidor', 'info');
+   } catch (e) {
+      mostrarAlerta('Error al eliminar: ' + e.message, 'danger');
    }
 }

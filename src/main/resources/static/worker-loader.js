@@ -5,13 +5,13 @@ function iniciarWorker() {
     try {
         workerSync = new Worker('/worker.js');
 
-        workerSync.onmessage = (e) => {
+        workerSync.onmessage = async (e) => {
             const { tipo, mensaje } = e.data;
             switch (tipo) {
                 case 'SYNC_COMPLETADO':
                     mostrarAlerta(`${e.data.mensaje}`, 'success');
-                    marcarTodasSincronizadas();
-                    actualizarContadorPendientes();
+                    await marcarTodasSincronizadas();
+                    await actualizarContadorPendientes();
                     break;
                 case 'SYNC_ERROR':
                 case 'WS_ERROR':

@@ -213,10 +213,16 @@
 
       <!-- ── MAPA ── -->
       <div id="secMapa" class="seccion p-3 d-none">
-         <h6 class="fw-bold mb-2">
-            <i class="bi bi-map"></i> Mapa de Registros
-         </h6>
-         <div id="mapa" style="height:450px; border-radius:12px; overflow:hidden;"></div>
+         <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold mb-0">
+               <i class="bi bi-map"></i> Mapa de Registros
+            </h6>
+            <div id="mapaLoading" class="d-none">
+               <span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
+               <span class="small text-muted ms-1">Cargando marcadores...</span>
+            </div>
+         </div>
+         <div id="mapa" style="height:450px; border-radius:12px; overflow:hidden; position: relative;"></div>
          <p class="small text-muted mt-2 text-center">
             <i class="bi bi-pin-map"></i> Marcadores rojos = locales · Azules = servidor
          </p>
@@ -240,6 +246,48 @@
          </div>
       </div>
 
+   </div>
+
+   <!-- Modal Editar -->
+   <div class="modal fade" id="modalEditar" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+         <div class="modal-content">
+            <div class="modal-header bg-warning">
+               <h6 class="modal-title fw-bold">
+                  <i class="bi bi-pencil"></i> Editar Encuesta
+               </h6>
+               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+               <input type="hidden" id="editId">
+               <input type="hidden" id="editTipo">
+               <div class="mb-3">
+                  <label class="form-label fw-semibold">Nombre</label>
+                  <input type="text" id="editNombre" class="form-control">
+               </div>
+               <div class="mb-3">
+                  <label class="form-label fw-semibold">Sector</label>
+                  <input type="text" id="editSector" class="form-control">
+               </div>
+               <div class="mb-3">
+                  <label class="form-label fw-semibold">Nivel Escolar</label>
+                  <select id="editNivel" class="form-select">
+                     <option value="Básico">Básico</option>
+                     <option value="Medio">Medio</option>
+                     <option value="Grado Universitario">Grado Universitario</option>
+                     <option value="Postgrado">Postgrado</option>
+                     <option value="Doctorado">Doctorado</option>
+                  </select>
+               </div>
+            </div>
+            <div class="modal-footer">
+               <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+               <button class="btn btn-warning fw-bold" onclick="guardarEdicion()">
+                  <i class="bi bi-save"></i> Guardar
+               </button>
+            </div>
+         </div>
+      </div>
    </div>
 
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
