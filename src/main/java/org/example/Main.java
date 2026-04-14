@@ -3,6 +3,7 @@ package org.example;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 // App imports
+import org.example.Models.Encuesta;
 import org.example.controllers.AuthController;
 import org.example.controllers.SurveyController;
 import org.example.services.MongoService;
@@ -64,6 +65,30 @@ public class Main {
         app.delete("/api/usuarios/{username}", org.example.controllers.UsuarioController::eliminarUsuario);
 
         app.get("/health", ctx -> ctx.json(Map.of("status", "ok", "mensaje", "Servidor activo")));
+
+        app.get("/api/surveys-grpc-proxy/usuario/{usuario}", ctx -> {
+            io.grpc.ManagedChannel ch = io.grpc.ManagedChannelBuilder.forAddress("localhost", 9090).usePlaintext().build();
+            com.survey.grpc.SurveyServiceGrpc.SurveyServiceBlockingStub stub = com.survey.grpc.SurveyServiceGrpc.newBlockingStub(ch);
+            com.survey.grpc.SurveyListResponse res = stub.listarFormularios(com.survey.grpc.UserRequest.newBuilder().setUsuario(ctx.pathParam("usuario")).build());
+            ch.shutdown();
+            java.util.List<Map<String, Object>> out = new java.util.ArrayList<>();
+            for (com.survey.grpc.SurveyResponse r : res.getEncuestasList()) {
+                out.add(Map.of("id", r.getId(), "nombre", r.getNombre(), "sector", r.getSector(), "nivelEscolar", r.getNivelEscolar(), "usuario", r.getUsuario(), "latitud", r.getLatitud(), "longitud", r.getLongitud(), "fechaRegistro", r.getFecha()));
+            }
+            ctx.json(out);
+        });
+
+        app.post("/api/surveys-grpc-proxy", ctx -> {
+            Encuesta body = ctx.bodyAsClass(Encuesta.class);
+            io.grpc.ManagedChannel ch = io.grpc.ManagedChannelBuilder.forAddress("localhost", 9090).usePlaintext().build();
+            com.survey.grpc.SurveyServiceGrpc.SurveyServiceBlockingStub stub = com.survey.grpc.SurveyServiceGrpc.newBlockingStub(ch);
+            com.survey.grpc.SurveyRequest req = com.survey.grpc.SurveyRequest.newBuilder()
+                    .setNombre(body.getNombre()).setSector(body.getSector()).setNivelEscolar(body.getNivelEscolar())
+                    .setUsuario(body.getUsuario()).setLatitud(body.getLatitud()).setLongitud(body.getLongitud()).build();
+            com.survey.grpc.SurveyResponse res = stub.crearFormulario(req);
+            ch.shutdown();
+            ctx.status(201).json(Map.of("id", res.getId(), "success", res.getSuccess(), "mensaje", res.getMensaje()));
+        });
 
     }
 }
