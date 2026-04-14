@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+option java_package = "com.survey.grpc";
+option java_outer_classname = "SurveyProto";
+option java_multiple_files = true;
+
+package survey;
+
+// Mensaje que representa un formulario de encuesta
+message SurveyRequest {
+  string nombre = 1;
+  string sector = 2;
+  string nivel_escolar = 3;
+  string usuario = 4;
+  double latitud = 5;
+  double longitud = 6;
+  string imagen_base64 = 7;
+}
+
+message SurveyResponse {
+  string id = 1;
+  bool success = 2;
+  string mensaje = 3;
+  string nombre = 4;
+  string sector = 5;
+  string nivel_escolar = 6;
+  string usuario = 7;
+  double latitud = 8;
+  double longitud = 9;
+  string fecha = 10;
+}
+
+message UserRequest {
+  string usuario = 1;
+}
+
+message SurveyListResponse {
+  repeated SurveyResponse encuestas = 1;
+}
+
+// Servicio gRPC para encuestas
+service SurveyService {
+  // Listar formularios de un usuario
+  rpc ListarFormularios(UserRequest) returns (SurveyListResponse);
+  // Crear un formulario nuevo
+  rpc CrearFormulario(SurveyRequest) returns (SurveyResponse);
+}

@@ -6,12 +6,15 @@ import io.javalin.http.staticfiles.Location;
 import org.example.controllers.AuthController;
 import org.example.controllers.SurveyController;
 import org.example.services.MongoService;
+import org.example.SurveyGrpcServer;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
         MongoService.getInstance();
         int httpPort = 7770;
+        SurveyGrpcServer grpcServer = new SurveyGrpcServer(9090);
+        grpcServer.start();
         Javalin app = Javalin.create(config -> {
             // Servir archivos estáticos del frontend desde el classpath
             config.staticFiles.add("/static", Location.CLASSPATH);
